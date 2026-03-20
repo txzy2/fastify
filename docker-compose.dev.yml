@@ -1,0 +1,35 @@
+services:
+  fastify_db:
+    image: ${PGSQL_VERSION}
+    restart: always
+    container_name: ${PROJECT_NAME}_db
+    tty: true
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+    ports:
+      - "5232:5432"
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+    networks:
+      - fasify_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  fastify_adminer:
+    image: ${ADMINER_VERSION}
+    container_name: ${PROJECT_NAME}_adminer
+    restart: always
+    ports:
+      - ${ADMINER_PORT}:8080
+    networks:
+      - fasify_net 
+
+networks:
+  fasify_net:
+    driver: bridge
+

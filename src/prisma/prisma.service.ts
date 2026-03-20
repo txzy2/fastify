@@ -1,0 +1,20 @@
+import {PrismaClient} from '@prisma/client';
+import {PrismaPg} from '@prisma/adapter-pg';
+
+export class PrismaService extends PrismaClient {
+    constructor() {
+        const adapter = new PrismaPg({
+            connectionString: process.env.DATABASE_URL
+        });
+
+        super({adapter});
+    }
+
+    async connect() {
+        await this.$connect();
+    }
+
+    async disconnect() {
+        await this.$disconnect();
+    }
+}
