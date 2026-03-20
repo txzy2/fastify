@@ -1,4 +1,4 @@
-import {FastifyRequest, FastifyReply} from 'fastify';
+import {FastifyRequest} from 'fastify';
 import {IUserService} from '@/modules/users/user.service';
 import type {UserRequestQuery, ApiResponse, UserRequestQueryByIdDto} from '@/types';
 import {Users} from '@prisma/client';

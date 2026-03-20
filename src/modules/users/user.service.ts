@@ -1,7 +1,7 @@
 import {Users} from '@prisma/client';
 import {IUserRepository} from './user.repository';
-import {AppError} from '@/utils/error-handler';
 import {ApiErrors} from '@/utils/enums/errors';
+import {AppError} from '@/core/bootstrap';
 
 export interface IUserService {
     findByName(name: string): Promise<Users>;
