@@ -5,9 +5,9 @@ import {LOGGER_CONFIG} from '@/core/logger';
 import {SERVER_CONFIG} from '@/core/config';
 import {openApiDocs} from '@/http/v1/schemas/user.schema';
 import {createContainer} from '@/core/container';
-import {AppError} from '@/utils/error-handler';
 import {registerUserRoutes} from '@/http/v1/routes';
 import {ApiErrors} from '@/utils/enums/errors';
+import {AppError} from '@/utils/error-handler';
 
 export const createApp = async (): Promise<FastifyInstance> => {
     const fastify = Fastify({logger: LOGGER_CONFIG});
@@ -26,7 +26,7 @@ export const createApp = async (): Promise<FastifyInstance> => {
         });
     });
 
-    const container = await createContainer();
+    const container = await createContainer(fastify.log);
 
     fastify.addHook('onClose', async () => {
         await container.prismaService.disconnect();

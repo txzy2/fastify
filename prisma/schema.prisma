@@ -6,10 +6,38 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserActivity {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
 model Users {
-  id   String @id @unique @default(uuid()) @db.Uuid
-  name String @unique @db.VarChar(255)
-  age  Int
+  id    String @id @unique @default(uuid()) @db.Uuid
+  name  String @unique @db.VarChar(255)
+  email String @unique @db.VarChar(255)
+  age   Int
+
+  active   UserActivity
+  licenses Licenses[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model Licenses {
+  id String @id @unique @default(uuid()) @db.Uuid
+
+  userId String @map("user_id") @db.Uuid
+  user   Users  @relation(fields: [userId], references: [id])
+
+  startsAt DateTime @map("starts_at") @db.Date
+  endsAt   DateTime @map("ends_at") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("licenses")
 }

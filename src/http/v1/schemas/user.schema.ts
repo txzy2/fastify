@@ -1,6 +1,8 @@
 import {SERVER_CONFIG} from '@/core/config';
 import {FastifySchema} from 'fastify';
 
+const UUID_PATTERN = '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+
 export const openApiDocs = {
     info: {
         title: process.env.APP_NAME || 'Fastify app',
@@ -14,39 +16,89 @@ export const UserNotFoundApiError = {
     description: 'User not found',
     type: 'object',
     properties: {
-        success: {type: 'boolean'},
-        error: {type: 'string'}
-    }
+        success: {type: 'boolean', example: false},
+        error: {type: 'string', example: 'User not found'}
+    },
+    required: ['success', 'error']
+};
+
+export const ValidationError = {
+    description: 'Validation error',
+    type: 'object',
+    properties: {
+        success: {type: 'boolean', example: false},
+        error: {type: 'string', example: 'Validation failed'},
+        details: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    field: {type: 'string'},
+                    message: {type: 'string'}
+                }
+            }
+        }
+    },
+    required: ['success', 'error']
+};
+
+const UserDataSchema = {
+    type: 'object',
+    properties: {
+        id: {type: 'string', format: 'uuid', pattern: UUID_PATTERN},
+        name: {type: 'string'},
+        email: {type: 'string'},
+        age: {type: 'number'},
+        active: {type: 'string', enum: ['ACTIVE', 'INACTIVE', 'BANNED']},
+        created_at: {type: 'string', format: 'date-time'},
+        updated_at: {type: 'string', format: 'date-time'}
+    },
+    required: ['id', 'name', 'email', 'age', 'active', 'created_at', 'updated_at']
+};
+
+const SuccessResponseSchema = {
+    type: 'object',
+    properties: {
+        success: {type: 'boolean', example: true},
+        data: UserDataSchema
+    },
+    required: ['success', 'data']
+};
+
+const QueryStringSchema = {
+    type: 'object',
+    properties: {
+        name: {type: 'string', minLength: 1}
+    },
+    required: ['name']
+};
+
+const ParamsSchema = {
+    type: 'object',
+    properties: {
+        id: {type: 'string', format: 'uuid', pattern: UUID_PATTERN}
+    },
+    required: ['id']
 };
 
 export const getUserSchema: FastifySchema = {
     summary: 'Get user by name',
     description: 'Returns a single user matched by name',
     tags: ['Users'],
-    querystring: {
-        type: 'object',
-        properties: {
-            name: {type: 'string', minLength: 1}
-        },
-        required: ['name']
-    },
+    querystring: QueryStringSchema,
     response: {
-        200: {
-            description: 'User found successfully',
+        200: SuccessResponseSchema,
+        400: ValidationError,
+        404: UserNotFoundApiError,
+        500: {
+            description: 'Internal server error',
             type: 'object',
             properties: {
-                success: {type: 'boolean'},
-                data: {
-                    type: 'object',
-                    properties: {
-                        id: {type: 'string', format: 'uuid'},
-                        name: {type: 'string'},
-                        age: {type: 'number'}
-                    }
-                }
-            }
-        },
-        404: UserNotFoundApiError
+                success: {type: 'boolean', example: false},
+                error: {type: 'string', example: 'Internal server error'}
+            },
+            required: ['success', 'error']
+        }
     }
 };
 
@@ -54,16 +106,40 @@ export const getUserByIdSchema: FastifySchema = {
     summary: 'Get user by ID',
     description: 'Returns a single user matched by UUID',
     tags: ['Users'],
-    params: {
+    params: ParamsSchema,
+
+    response: {
+        200: SuccessResponseSchema,
+        400: ValidationError,
+        404: UserNotFoundApiError,
+        500: {
+            description: 'Internal server error',
+            type: 'object',
+            properties: {
+                success: {type: 'boolean', example: false},
+                error: {type: 'string', example: 'Internal server error'}
+            },
+            required: ['success', 'error']
+        }
+    }
+};
+
+export const registerUserSchema: FastifySchema = {
+    tags: ['Users'],
+    summary: 'Register a new user',
+    description: 'Creates a new user and generates a license for them',
+    body: {
         type: 'object',
+        required: ['name', 'email', 'age'],
         properties: {
-            id: {type: 'string', format: 'uuid'}
-        },
-        required: ['id']
+            name: {type: 'string'},
+            email: {type: 'string', format: 'email'},
+            age: {type: 'number'}
+        }
     },
     response: {
-        200: {
-            description: 'User found successfully',
+        201: {
+            description: 'User successfully registered',
             type: 'object',
             properties: {
                 success: {type: 'boolean'},
@@ -71,12 +147,27 @@ export const getUserByIdSchema: FastifySchema = {
                     type: 'object',
                     properties: {
                         id: {type: 'string', format: 'uuid'},
-                        name: {type: 'string'},
-                        age: {type: 'number'}
+                        created_at: {type: 'string', format: 'date-time'},
+                        updated_at: {type: 'string', format: 'date-time'}
                     }
                 }
             }
         },
-        404: UserNotFoundApiError
+        400: {
+            description: 'Validation error or user already exists',
+            type: 'object',
+            properties: {
+                success: {type: 'boolean'},
+                error: {type: 'string'}
+            }
+        },
+        500: {
+            description: 'Internal server error',
+            type: 'object',
+            properties: {
+                success: {type: 'boolean'},
+                error: {type: 'string'}
+            }
+        }
     }
 };
