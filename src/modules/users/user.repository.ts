@@ -35,7 +35,7 @@ export class UserRepository implements IUserRepository {
      * @returns {Promise<Users | null>} - Объект Users, если пользователь найден, или null, если не найден.
      */
     public async getByName(name: string): Promise<Users | null> {
-        return await this.prisma.users.findUnique({where: {name}});
+        return await this.prisma.users.findFirst({where: {name}});
     }
 
     /**

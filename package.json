@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch index.ts",
+    "dev": "bun --watch index.ts | bunx pino-pretty",
     "prod": "bun index.ts"
   },
   "devDependencies": {
@@ -24,6 +24,7 @@
     "fastify": "^5.8.2",
     "file-stream-rotator": "^1.0.0",
     "pg": "^8.20.0",
+    "pino-loki": "^3.0.0",
     "pino-roll": "^4.0.0",
     "prisma": "^7.5.0",
     "reflect-metadata": "^0.2.2",

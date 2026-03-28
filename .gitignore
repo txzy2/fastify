@@ -3,3 +3,6 @@ logs/
 .env
 /generated/prisma
 dbdata/
+loki_data/
+grafana_data/
+prometheus_data/
