@@ -108,6 +108,7 @@ export const getUserByIdSchema: FastifySchema = {
     description: 'Returns a single user matched by UUID',
     tags: ['Users'],
     params: ParamsSchema,
+
     response: {
         200: SuccessResponseSchema,
         400: ValidationError,

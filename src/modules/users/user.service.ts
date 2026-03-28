@@ -1,11 +1,12 @@
 import {IUserRepository} from './user.repository';
 import {ApiErrors} from '@/utils/enums/errors';
+
 import {RegisterUserResponseDto, UserResponseDto} from './dto/user-response.dto';
 import {mapRegisterUserToDto, mapUserFromRepoToDto} from './user.mapper';
 import {Prisma, UserActivity} from '@prisma/client';
 import {RegisterUserDto} from './dto/user-requests.dto';
 import {ILogger} from '@/core/container';
-import { AppError } from '@/utils/error-handler';
+import {AppError} from '@/utils/error-handler';
 
 export interface IUserService {
     findByName(name: string): Promise<UserResponseDto>;
