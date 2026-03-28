@@ -2,11 +2,11 @@ import {RegisterUserDto} from '../dto/user-requests.dto';
 import {IUserService} from '../user.service';
 import {ILicensesService, LicensesService} from '../../licenses/licenses.service';
 import {PrismaService} from '@/prisma/prisma.service';
-import {AppError} from '@/utils/error-handler';
 import {ApiErrors} from '@/utils/enums/errors';
 import {ILogger} from '@/core/container';
 import {UserActivity} from '@prisma/client';
 import {RegisterUserResponseDto} from '../dto/user-response.dto';
+import {AppError} from '@/utils/error-handler';
 
 export interface IRegisterUserUseCase {
     execute(data: RegisterUserDto): Promise<RegisterUserResponseDto>;

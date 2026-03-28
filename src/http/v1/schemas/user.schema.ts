@@ -45,16 +45,15 @@ export const ValidationError = {
 const UserDataSchema = {
     type: 'object',
     properties: {
-        id: {
-            type: 'string',
-            format: 'uuid',
-            pattern: UUID_PATTERN,
-            example: '550e8400-e29b-41d4-a716-446655440000'
-        },
-        name: {type: 'string', example: 'John Doe'},
-        age: {type: 'number', example: 30}
+        id: {type: 'string', format: 'uuid', pattern: UUID_PATTERN},
+        name: {type: 'string'},
+        email: {type: 'string'},
+        age: {type: 'number'},
+        active: {type: 'string', enum: ['ACTIVE', 'INACTIVE', 'BANNED']},
+        created_at: {type: 'string', format: 'date-time'},
+        updated_at: {type: 'string', format: 'date-time'}
     },
-    required: ['id', 'name', 'age']
+    required: ['id', 'name', 'email', 'age', 'active', 'created_at', 'updated_at']
 };
 
 const SuccessResponseSchema = {

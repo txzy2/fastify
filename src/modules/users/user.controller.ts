@@ -16,7 +16,7 @@ export class UserController {
     ) {}
 
     /**
-     * getUser - контроллер получения пользователя по имени
+     * getUserByName - контроллер получения пользователя по имени
      *
      * @param {FastifyRequest<{Querystring: UserRequestQuery}>} request
      *

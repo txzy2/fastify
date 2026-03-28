@@ -7,6 +7,7 @@ export const mapUserFromRepoToDto = (user: Users): UserResponseDto => {
         name: user.name,
         email: user.email,
         active: user.active,
+        age: user.age,
         created_at: user.createdAt,
         updated_at: user.updatedAt
     };

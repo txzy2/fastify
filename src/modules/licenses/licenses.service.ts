@@ -1,8 +1,8 @@
-import {AppError} from '@/utils/error-handler';
 import {ILicensesRepository} from './licenses.repository';
 import {ApiErrors} from '@/utils/enums/errors';
 import {Prisma} from '@prisma/client';
 import {ILogger} from '@/core/container';
+import {AppError} from '@/utils/error-handler';
 
 export interface ILicensesService {
     register(userId: string, tx?: Prisma.TransactionClient): Promise<void>;
