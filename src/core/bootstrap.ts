@@ -26,7 +26,7 @@ export const createApp = async (): Promise<FastifyInstance> => {
         });
     });
 
-    const container = await createContainer();
+    const container = await createContainer(fastify.log);
 
     fastify.addHook('onClose', async () => {
         await container.prismaService.disconnect();

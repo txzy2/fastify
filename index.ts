@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import {startApp} from '@/core/bootstrap';
 
 startApp().catch(err => {
