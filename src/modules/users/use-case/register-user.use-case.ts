@@ -30,7 +30,7 @@ export class RegisterUserUseCase implements IRegisterUserUseCase {
      */
     public async execute(data: RegisterUserDto): Promise<RegisterUserResponseDto> {
         const isExist = await this.userService.isExistUserByParams({
-            OR: [{email: data.email}, {name: data.name}],
+            email: data.email,
             AND: [{active: UserActivity.ACTIVE}]
         });
 

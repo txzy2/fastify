@@ -14,6 +14,16 @@ export class LicensesService implements ILicensesService {
         private readonly logger: ILogger
     ) {}
 
+    /**
+     * register - Регистрация лицензии
+     *
+     * @param {string} userId - уникальный идентификатор пользователя
+     * @param {Prisma.TransactionClient} tx - транзакция
+     *
+     * @throws {AppError} - если лицензия не создана
+     *
+     * @returns {Promise<void>}
+     */
     public async register(userId: string, tx?: Prisma.TransactionClient): Promise<void> {
         const license = await this.LicensesRepository.create(userId, tx);
 
