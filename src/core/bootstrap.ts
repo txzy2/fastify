@@ -1,4 +1,4 @@
-import Fastify, {FastifyInstance} from 'fastify';
+import Fastify, {FastifyError, FastifyInstance} from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import {LOGGER_CONFIG} from '@/core/logger';
@@ -14,12 +14,22 @@ export const createApp = async (): Promise<FastifyInstance> => {
 
     fastify.setErrorHandler((error, request, reply) => {
         request.log.error(error);
+        const fastifyError = error as FastifyError;
+
         if (error instanceof AppError) {
             return reply.status(error.statusCode).send({
                 success: false,
                 error: error.message
             });
         }
+
+        if (fastifyError.code === 'FST_ERR_VALIDATION') {
+            return reply.status(400).send({
+                success: false,
+                error: fastifyError.message
+            });
+        }
+
         return reply.status(500).send({
             success: false,
             error: ApiErrors.INTERNAL_SERVER_ERROR
