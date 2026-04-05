@@ -7,6 +7,7 @@ import {Prisma, UserActivity} from '@prisma/client';
 import {RegisterUserDto} from './dto/user-requests.dto';
 import {ILogger} from '@/core/container';
 import {AppError} from '@/utils/error-handler';
+import {hashPassword} from '@/utils/helpers/passwords.helper';
 
 export interface IUserService {
     findByName(name: string): Promise<UserResponseDto>;
@@ -123,7 +124,7 @@ export class UserService implements IUserService {
         data: RegisterUserDto,
         tx?: Prisma.TransactionClient
     ): Promise<RegisterUserResponseDto> {
-        const user = await this.userRepository.create(data, tx);
+        const user = await this.userRepository.create(data, await hashPassword(data.password), tx);
         if (!user) {
             this.logger.error(ApiErrors.USER_CREATE_ERROR);
             throw new AppError(ApiErrors.USER_CREATE_ERROR, 500);

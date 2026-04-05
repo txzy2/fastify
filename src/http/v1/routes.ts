@@ -6,6 +6,7 @@ import {UserRequestQuery, UserRequestQueryByIdDto} from '@/modules/users/dto/use
 import {RegisterUserResponseDto, UserResponseDto} from '@/modules/users/dto/user-response.dto';
 import {RegisterUserDto} from '../../modules/users/dto/user-requests.dto';
 import {logRequest} from '../hooks/log-request.hook';
+import {validatePassword} from '../hooks/validate-password.hook';
 
 /**
  * Registers user routes on the Fastify instance.
@@ -36,7 +37,7 @@ export const registerUserRoutes = (
         Reply: ApiResponse<RegisterUserResponseDto>;
     }>(
         '/user/register',
-        {preHandler: [logRequest], schema: registerUserSchema},
+        {preHandler: [logRequest, validatePassword], schema: registerUserSchema},
         userController.registerUser
     );
 };

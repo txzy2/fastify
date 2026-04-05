@@ -10,7 +10,11 @@ export interface IUserRepository {
         tx?: Prisma.TransactionClient
     ): Promise<Users | null>;
 
-    create(data: RegisterUserDto, tx?: Prisma.TransactionClient): Promise<Users | null>;
+    create(
+        data: RegisterUserDto,
+        hashPassword: string,
+        tx?: Prisma.TransactionClient
+    ): Promise<Users | null>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -58,6 +62,7 @@ export class UserRepository implements IUserRepository {
      */
     public async create(
         data: RegisterUserDto,
+        hashPassword: string,
         tx?: Prisma.TransactionClient
     ): Promise<Users | null> {
         const client = tx ?? this.prisma;
@@ -67,6 +72,7 @@ export class UserRepository implements IUserRepository {
                 name: data.name,
                 age: data.age,
                 email: data.email,
+                password: hashPassword,
                 active: UserActivity.ACTIVE
             }
         });
