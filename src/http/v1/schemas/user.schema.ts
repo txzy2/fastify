@@ -130,11 +130,12 @@ export const registerUserSchema: FastifySchema = {
     description: 'Creates a new user and generates a license for them',
     body: {
         type: 'object',
-        required: ['name', 'email', 'age'],
+        required: ['name', 'email', 'age', 'password'],
         properties: {
             name: {type: 'string'},
             email: {type: 'string', format: 'email'},
-            age: {type: 'number'}
+            age: {type: 'number'},
+            password: {type: 'string'}
         }
     },
     response: {
