@@ -1,6 +1,6 @@
 import {RegisterUserDto} from '../dto/user-requests.dto';
 import {IUserService} from '../user.service';
-import {ILicensesService, LicensesService} from '../../licenses/licenses.service';
+import {ILicensesService} from '../../licenses/licenses.service';
 import {PrismaService} from '@/prisma/prisma.service';
 import {ApiErrors} from '@/utils/enums/errors';
 import {ILogger} from '@/core/container';
