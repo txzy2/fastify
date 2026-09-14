@@ -21,5 +21,9 @@ export const registerRoutes = (
     controllers: RouteControllers
 ) => {
     registerUserRoutes(fastifyInstance, controllers.userController, controllers.authGuard);
-    registerAuthRoutes(fastifyInstance, controllers.authController);
+    registerAuthRoutes(
+        fastifyInstance,
+        controllers.authController,
+        controllers.authGuard
+    );
 };

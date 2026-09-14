@@ -13,7 +13,7 @@ import {ITokenService} from './token.service';
 export interface IAuthService {
     login(data: LoginUserDto): Promise<LoginUserResponseDto>;
     refresh(refreshToken: string): Promise<LoginUserResponseDto>;
-    logout(refreshToken: string): Promise<void>;
+    logout(refreshToken: string, userId: string): Promise<void>;
 }
 
 export class AuthService implements IAuthService {
@@ -52,6 +52,16 @@ export class AuthService implements IAuthService {
      * @throws {AppError} 401 если refresh-токен недействителен
      */
     public async refresh(refreshToken: string): Promise<LoginUserResponseDto> {
+        const reusedByUserId = await this.refreshTokenRepository.getUsedUserId(refreshToken);
+
+        if (reusedByUserId) {
+            await this.refreshTokenRepository.removeAllForUser(reusedByUserId);
+            this.logger.warn(
+                `Refresh token reuse detected for user ${reusedByUserId}; all sessions revoked`
+            );
+            throw new AppError(ApiErrors.REFRESH_TOKEN_INVALID, 401);
+        }
+
         const userId = await this.refreshTokenRepository.getUserId(refreshToken);
 
         if (!userId) {
@@ -66,17 +76,29 @@ export class AuthService implements IAuthService {
         }
 
         await this.refreshTokenRepository.remove(refreshToken);
+        await this.refreshTokenRepository.markUsed(
+            refreshToken,
+            userId,
+            SERVER_CONFIG.jwt.refreshTtlSeconds
+        );
 
         return await this.issueTokens(user);
     }
 
     /**
-     * logout - отзыв refresh-токена.
+     * logout - отзыв refresh-токена. Удаляет токен только если он принадлежит
+     * текущему (аутентифицированному) пользователю, чтобы нельзя было разлогинить
+     * чужую сессию, зная только refresh-токен.
      *
      * @param {string} refreshToken
+     * @param {string} userId - id пользователя из access-токена
      */
-    public async logout(refreshToken: string): Promise<void> {
-        await this.refreshTokenRepository.remove(refreshToken);
+    public async logout(refreshToken: string, userId: string): Promise<void> {
+        const ownerId = await this.refreshTokenRepository.getUserId(refreshToken);
+
+        if (ownerId && ownerId === userId) {
+            await this.refreshTokenRepository.remove(refreshToken);
+        }
     }
 
     private async issueTokens(user: Users): Promise<LoginUserResponseDto> {

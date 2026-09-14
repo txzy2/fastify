@@ -52,7 +52,9 @@ UseCase           — оркестрация: несколько сервисо�
 > `auth` для регистрации оркеструет `UserService` и `LicensesService` внутри одной
 > транзакции. DTO для регистрации лежат в `users`, т.к. это контракт создания пользователя.
 > Логин проверяет пароль через `userRepository`, выпускает access-JWT (`TokenService`) и
-> хранит refresh-токен в Redis (`RefreshTokenRepository`) с ротацией. Защита маршрутов —
+> хранит refresh-токен в Redis (`RefreshTokenRepository`) хэшем с ротацией и reuse-detection
+> (повторное использование ротированного токена отзывает все сессии пользователя).
+> `/auth/logout` защищён `authGuard` и удаляет только свой refresh-токен. Защита маршрутов —
 > `authGuard` (`src/http/hooks/auth.hook.ts`) как `preHandler`.
 
 ## DI / Composition root
