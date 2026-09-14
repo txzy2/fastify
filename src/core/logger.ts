@@ -8,6 +8,7 @@ export interface ILogger {
 }
 
 const isDev = process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'development';
+const isProd = process.env.NODE_ENV === 'prod' || process.env.NODE_ENV === 'production';
 const logsDir = path.join(process.cwd(), 'logs');
 
 const fileTargets = [
@@ -53,7 +54,7 @@ export const LOGGER_CONFIG: FastifyServerOptions['logger'] = {
                       }
                   ]
                 : []),
-            ...fileTargets,
+            ...(isProd ? [] : fileTargets),
             {
                 target: 'pino-loki',
                 level: 'debug',

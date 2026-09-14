@@ -1,11 +1,13 @@
 node_modules/
 logs/
 .env
+.env.prod
 /generated/prisma
 dbdata/
 loki_data/
 grafana_data/
 prometheus_data/
+prod_data/
 
 .idea
 .vscode
