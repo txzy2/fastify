@@ -24,7 +24,7 @@ init:
 
 init-prod:
 	@test -f .env.prod || cp .env.prod.example .env.prod
-	@mkdir -p prod_data/db prod_data/prometheus prod_data/grafana prod_data/loki
+	@mkdir -p prod_data/db prod_data/prometheus prod_data/grafana prod_data/loki prod_data/nginx_logs prod_data/alloy
 	@docker run --rm --user root -v "$(CURDIR)/prod_data/prometheus:/data" --entrypoint chown grafana/grafana:latest -R 65534:65534 /data
 	@docker run --rm --user root -v "$(CURDIR)/prod_data/grafana:/data" --entrypoint chown grafana/grafana:latest -R 472:472 /data
 	@docker run --rm --user root -v "$(CURDIR)/prod_data/loki:/data" --entrypoint chown grafana/grafana:latest -R 10001:10001 /data

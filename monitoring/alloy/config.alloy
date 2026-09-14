@@ -1,0 +1,21 @@
+loki.source.file "nginx" {
+  targets = [
+    {
+      __path__ = "/var/log/nginx/access.log",
+      job      = "nginx",
+      logtype  = "access",
+    },
+    {
+      __path__ = "/var/log/nginx/error.log",
+      job      = "nginx",
+      logtype  = "error",
+    },
+  ]
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
