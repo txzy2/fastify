@@ -8,3 +8,12 @@ export interface RegisterUserDto {
     age: number;
     password: string;
 }
+
+export interface LoginUserDto {
+    email: string;
+    password: string;
+}
+
+export interface RefreshTokenDto {
+    refresh_token: string;
+}

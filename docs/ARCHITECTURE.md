@@ -46,23 +46,28 @@ UseCase           — оркестрация: несколько сервисо�
 | Модуль      | Ответственность                              | Файлы                                        |
 | ----------- | -------------------------------------------- | -------------------------------------------- |
 | `users`     | CRUD/чтение пользователей                    | controller, service, repository, mapper, dto |
-| `auth`      | Регистрация (сценарий с user + license)      | controller, use-case                         |
+| `auth`      | Регистрация, логин/refresh/logout (JWT + Redis) | controller, service, token.service, refresh-token.repository, use-case |
 | `licenses`  | Создание лицензии пользователя               | service, repository                          |
 
-> `auth` не владеет БД — он оркеструет `UserService` и `LicensesService` внутри одной
+> `auth` для регистрации оркеструет `UserService` и `LicensesService` внутри одной
 > транзакции. DTO для регистрации лежат в `users`, т.к. это контракт создания пользователя.
+> Логин проверяет пароль через `userRepository`, выпускает access-JWT (`TokenService`) и
+> хранит refresh-токен в Redis (`RefreshTokenRepository`) с ротацией. Защита маршрутов —
+> `authGuard` (`src/http/hooks/auth.hook.ts`) как `preHandler`.
 
 ## DI / Composition root
 
 `src/core/container.ts` создаёт граф объектов в порядке:
 
 ```
-PrismaService → Repositories → Services → UseCases → Controllers
+PrismaService → Repositories → Services → UseCases → Controllers → Hooks
 ```
 
-и возвращает `{prismaService, userController, authController}`. `bootstrap.ts` получает
-контейнер, регистрирует `onClose` (отключение Prisma) и передаёт контроллеры в
-`registerRoutes`. Никаких синглтонов и сервис-локаторов: зависимости идут через
+(вместе с `RedisService`, который подключается рядом с `PrismaService`).
+
+и возвращает `{prismaService, redisService, authGuard, userController, authController}`.
+`bootstrap.ts` получает контейнер, регистрирует `onClose` (отключение Prisma и Redis) и
+передаёт контроллеры и `authGuard` в `registerRoutes`. Никаких синглтонов и сервис-локаторов: зависимости идут через
 конструкторы.
 
 `ILogger` объявлен в `src/core/logger.ts`. Не импортируйте типы из `container.ts` в

@@ -4,6 +4,8 @@ import type {UserRequestQueryByIdDto} from './dto/user-requests.dto';
 import {ApiReply} from '@/types';
 import {apiSuccess} from '@/utils/helpers/response.helper';
 import {UserResponseDto} from './dto/user-response.dto';
+import {ApiErrors} from '@/utils/enums/errors';
+import {AppError} from '@/utils/error-handler';
 
 export class UserController {
     public constructor(private readonly userService: IUserService) {}
@@ -21,7 +23,26 @@ export class UserController {
         reply: ApiReply<UserResponseDto>
     ): Promise<void> => {
         const {id} = request.params;
-        const user = await this.userService.findById(id);
-        await reply.status(200).send(apiSuccess(user));
+        await reply.status(200).send(apiSuccess(await this.userService.findById(id)));
+    };
+
+    /**
+     * getMe - контроллер получения текущего пользователя по access-токену.
+     *
+     * @param {FastifyRequest} request
+     * @param {ApiReply<UserResponseDto>} reply
+     * @returns {Promise<void>}
+     */
+    public getMe = async (
+        request: FastifyRequest,
+        reply: ApiReply<UserResponseDto>
+    ): Promise<void> => {
+        const userId = request.user?.sub;
+
+        if (!userId) {
+            throw new AppError(ApiErrors.UNAUTHORIZED, 401);
+        }
+
+        await reply.status(200).send(apiSuccess(await this.userService.findById(userId)));
     };
 }

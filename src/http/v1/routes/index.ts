@@ -1,4 +1,4 @@
-import {FastifyInstance} from 'fastify';
+import {FastifyInstance, preHandlerHookHandler} from 'fastify';
 import {UserController} from '@/modules/users/user.controller';
 import {AuthController} from '@/modules/auth/auth.controller';
 import {registerUserRoutes} from './user.routes';
@@ -7,6 +7,7 @@ import {registerAuthRoutes} from './auth.routes';
 interface RouteControllers {
     userController: UserController;
     authController: AuthController;
+    authGuard: preHandlerHookHandler;
 }
 
 /**
@@ -19,6 +20,6 @@ export const registerRoutes = (
     fastifyInstance: FastifyInstance,
     controllers: RouteControllers
 ) => {
-    registerUserRoutes(fastifyInstance, controllers.userController);
+    registerUserRoutes(fastifyInstance, controllers.userController, controllers.authGuard);
     registerAuthRoutes(fastifyInstance, controllers.authController);
 };

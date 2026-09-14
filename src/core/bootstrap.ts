@@ -59,7 +59,8 @@ export const createApp = async (): Promise<FastifyInstance> => {
         instance => {
             registerRoutes(instance, {
                 userController: container.userController,
-                authController: container.authController
+                authController: container.authController,
+                authGuard: container.authGuard
             });
         },
         {prefix: '/api/v1'}
