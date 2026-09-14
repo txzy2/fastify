@@ -3,10 +3,12 @@
 # === Development ===
 
 init-dev:
-	@mkdir -p dev_data/db dev_data/prometheus dev_data/grafana dev_data/loki
-	@docker run --rm --user root -v "$(CURDIR)/dev_data/prometheus:/data" --entrypoint chown grafana/grafana:latest -R 65534:65534 /data
-	@docker run --rm --user root -v "$(CURDIR)/dev_data/grafana:/data" --entrypoint chown grafana/grafana:latest -R 472:472 /data
-	@docker run --rm --user root -v "$(CURDIR)/dev_data/loki:/data" --entrypoint chown grafana/grafana:latest -R 10001:10001 /data
+	@docker run --rm --user root -v "$(CURDIR)/dev_data:/data" --entrypoint sh grafana/grafana:latest -c '\
+		mkdir -p /data/db /data/prometheus /data/grafana /data/loki && \
+		chown 1000:1000 /data && \
+		chown -R 65534:65534 /data/prometheus && \
+		chown -R 472:472 /data/grafana && \
+		chown -R 10001:10001 /data/loki'
 
 up-dev: init-dev
 	docker compose -f docker-compose.dev.yml up -d
@@ -30,11 +32,13 @@ init:
 
 init-prod:
 	@test -f .env.prod || cp .env.prod.example .env.prod
-	@mkdir -p prod_data/db prod_data/prometheus prod_data/grafana prod_data/loki prod_data/nginx_logs prod_data/alloy
-	@-touch prod_data/nginx_logs/access.log prod_data/nginx_logs/error.log
-	@docker run --rm --user root -v "$(CURDIR)/prod_data/prometheus:/data" --entrypoint chown grafana/grafana:latest -R 65534:65534 /data
-	@docker run --rm --user root -v "$(CURDIR)/prod_data/grafana:/data" --entrypoint chown grafana/grafana:latest -R 472:472 /data
-	@docker run --rm --user root -v "$(CURDIR)/prod_data/loki:/data" --entrypoint chown grafana/grafana:latest -R 10001:10001 /data
+	@docker run --rm --user root -v "$(CURDIR)/prod_data:/data" --entrypoint sh grafana/grafana:latest -c '\
+		mkdir -p /data/db /data/prometheus /data/grafana /data/loki /data/nginx_logs /data/alloy && \
+		chown 1000:1000 /data && \
+		chown -R 65534:65534 /data/prometheus && \
+		chown -R 472:472 /data/grafana && \
+		chown -R 10001:10001 /data/loki && \
+		touch /data/nginx_logs/access.log /data/nginx_logs/error.log'
 
 build-prod:
 	docker compose --env-file .env.prod -f docker-compose.yml build
