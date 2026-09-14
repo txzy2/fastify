@@ -65,14 +65,6 @@ const SuccessResponseSchema = {
     required: ['success', 'data']
 };
 
-const QueryStringSchema = {
-    type: 'object',
-    properties: {
-        name: {type: 'string', minLength: 1}
-    },
-    required: ['name']
-};
-
 const ParamsSchema = {
     type: 'object',
     properties: {
@@ -96,20 +88,6 @@ export const getUserByIdSchema: FastifySchema = {
     description: 'Returns a single user matched by UUID',
     tags: ['Users'],
     params: ParamsSchema,
-
-    response: {
-        200: SuccessResponseSchema,
-        400: ValidationError,
-        404: UserNotFoundApiError,
-        500: InternalServerErrorApiError
-    }
-};
-
-export const getUserByNameSchema: FastifySchema = {
-    summary: 'Get user by name',
-    description: 'Returns a single user matched by name',
-    tags: ['Users'],
-    querystring: QueryStringSchema,
 
     response: {
         200: SuccessResponseSchema,

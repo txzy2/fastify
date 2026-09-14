@@ -4,7 +4,6 @@ import {RegisterUserDto} from './dto/user-requests.dto';
 
 export interface IUserRepository {
     getById(id: string): Promise<Users | null>;
-    getByName(name: string): Promise<Users | null>;
     getByParams(
         params: Prisma.UsersWhereInput,
         tx?: Prisma.TransactionClient
@@ -29,17 +28,6 @@ export class UserRepository implements IUserRepository {
      */
     public async getById(id: string): Promise<Users | null> {
         return await this.prisma.users.findUnique({where: {id}});
-    }
-
-    /**
-     * Найти пользователя по имени.
-     *
-     * @param {string} name - Имя пользователя.
-     *
-     * @returns {Promise<Users | null>} - Объект Users, если пользователь найден, или null, если не найден.
-     */
-    public async getByName(name: string): Promise<Users | null> {
-        return await this.prisma.users.findFirst({where: {name}});
     }
 
     /**

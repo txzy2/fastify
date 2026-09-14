@@ -10,7 +10,6 @@ import {AppError} from '@/utils/error-handler';
 import {hashPassword} from '@/utils/helpers/passwords.helper';
 
 export interface IUserService {
-    findByName(name: string): Promise<UserResponseDto>;
     findById(id: string): Promise<UserResponseDto>;
     findByParamsOrThrow(
         params: Prisma.UsersWhereInput,
@@ -39,22 +38,6 @@ export class UserService implements IUserService {
         private readonly userRepository: IUserRepository,
         private readonly logger: ILogger
     ) {}
-
-    /**
-     * findByName - Поиск пользователя по имени
-     *
-     * @param {string} name
-     * @returns {Promise<UserResponseDto>}
-     */
-    public async findByName(name: string): Promise<UserResponseDto> {
-        const existUser = await this.userRepository.getByName(name);
-        if (!existUser || existUser.active !== UserActivity.ACTIVE) {
-            this.logger.warn(`User with name ${name} not found`);
-            throw new AppError(ApiErrors.USER_NOT_FOUND, 404);
-        }
-
-        return mapUserFromRepoToDto(existUser);
-    }
 
     /**
      * findById - Поиск пользователя по id

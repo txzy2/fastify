@@ -80,11 +80,11 @@ PrismaService → Repositories → Services → UseCases → Controllers
    `LicensesService.register` (создание лицензии).
 5. Результат маппится в `RegisterUserResponseDto` → `{success, data}` со статусом 201.
 
-**Чтение — `GET /api/v1/user/:id` и `GET /api/v1/user?name=...`:**
+**Чтение — `GET /api/v1/user/:id`:**
 
 1. `preHandler`: `logRequest`.
-2. Валидация `params`/`querystring`.
-3. `UserController` → `UserService.findById` / `findByName` → `UserRepository`.
+2. Валидация `params`.
+3. `UserController.getUserById` → `UserService.findById` → `UserRepository.getById`.
 4. Проверка `active === ACTIVE`, иначе `AppError(USER_NOT_FOUND, 404)`.
 5. Маппинг Prisma-модели в `UserResponseDto` → ответ 200.
 
