@@ -5,7 +5,7 @@ import {LOGGER_CONFIG} from '@/core/logger';
 import {SERVER_CONFIG} from '@/core/config';
 import {openApiDocs} from '@/http/v1/schemas/user.schema';
 import {createContainer} from '@/core/container';
-import {registerUserRoutes} from '@/http/v1/routes';
+import {registerRoutes} from '@/http/v1/routes';
 import {ApiErrors} from '@/utils/enums/errors';
 import {AppError} from '@/utils/error-handler';
 
@@ -58,7 +58,10 @@ export const createApp = async (): Promise<FastifyInstance> => {
 
     fastify.register(
         instance => {
-            registerUserRoutes(instance, container.userController);
+            registerRoutes(instance, {
+                userController: container.userController,
+                authController: container.authController
+            });
         },
         {prefix: '/api/v1'}
     );

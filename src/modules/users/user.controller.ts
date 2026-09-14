@@ -1,15 +1,11 @@
 import {FastifyRequest} from 'fastify';
 import {IUserService} from '@/modules/users/user.service';
-import type {RegisterUserDto, UserRequestQueryByIdDto} from './dto/user-requests.dto';
+import type {UserRequestQueryByIdDto} from './dto/user-requests.dto';
 import {ApiReply} from '@/types';
-import {RegisterUserResponseDto, UserResponseDto} from './dto/user-response.dto';
-import {IRegisterUserUseCase} from './use-case/register-user.use-case';
+import {UserResponseDto} from './dto/user-response.dto';
 
 export class UserController {
-    public constructor(
-        private readonly userService: IUserService,
-        private readonly registerUserUseCase: IRegisterUserUseCase
-    ) {}
+    public constructor(private readonly userService: IUserService) {}
 
     /**
      * getUserById - контроллер получения пользователя по id
@@ -25,22 +21,5 @@ export class UserController {
     ): Promise<void> => {
         const {id} = request.params;
         await reply.status(200).send({success: true, data: await this.userService.findById(id)});
-    };
-
-    /**
-     * registerUser - контроллер регистрации пользователя
-     *
-     * @param {FastifyRequest<{Body: RegisterUserDto}>} request
-     * @param {ApiReply<RegisterUserResponseDto>} reply
-     * @returns {Promise<void>}
-     */
-    public registerUser = async (
-        request: FastifyRequest<{Body: RegisterUserDto}>,
-        reply: ApiReply<RegisterUserResponseDto>
-    ): Promise<void> => {
-        const {body} = request;
-        await reply
-            .status(201)
-            .send({success: true, data: await this.registerUserUseCase.execute(body)});
     };
 }

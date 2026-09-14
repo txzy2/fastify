@@ -1,8 +1,9 @@
 import {PrismaService} from '@/prisma/prisma.service';
 import {UserService} from '@/modules/users/user.service';
 import {UserController} from '@/modules/users/user.controller';
+import {AuthController} from '@/modules/auth/auth.controller';
 import {UserRepository} from '@/modules/users/user.repository';
-import {RegisterUserUseCase} from '@/modules/users/use-case/register-user.use-case';
+import {RegisterUserUseCase} from '@/modules/auth/use-case/register-user.use-case';
 import {LicensesService} from '@/modules/licenses/licenses.service';
 import {LicensesRepository} from '@/modules/licenses/licenses.repository';
 import fastify from 'fastify';
@@ -10,6 +11,7 @@ import fastify from 'fastify';
 export interface Container {
     prismaService: PrismaService;
     userController: UserController;
+    authController: AuthController;
 }
 
 export interface ILogger {
@@ -46,10 +48,12 @@ export const createContainer = async (logger: ILogger): Promise<Container> => {
     );
 
     // === Controllers ===
-    const userController = new UserController(userService, createUserUseCase);
+    const userController = new UserController(userService);
+    const authController = new AuthController(createUserUseCase);
 
     return {
         prismaService,
-        userController
+        userController,
+        authController
     };
 };
