@@ -81,27 +81,6 @@ const ParamsSchema = {
     required: ['id']
 };
 
-export const getUserSchema: FastifySchema = {
-    summary: 'Get user by name',
-    description: 'Returns a single user matched by name',
-    tags: ['Users'],
-    querystring: QueryStringSchema,
-    response: {
-        200: SuccessResponseSchema,
-        400: ValidationError,
-        404: UserNotFoundApiError,
-        500: {
-            description: 'Internal server error',
-            type: 'object',
-            properties: {
-                success: {type: 'boolean', example: false},
-                error: {type: 'string', example: 'Internal server error'}
-            },
-            required: ['success', 'error']
-        }
-    }
-};
-
 export const getUserByIdSchema: FastifySchema = {
     summary: 'Get user by ID',
     description: 'Returns a single user matched by UUID',

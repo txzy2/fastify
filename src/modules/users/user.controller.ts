@@ -1,10 +1,6 @@
 import {FastifyRequest} from 'fastify';
 import {IUserService} from '@/modules/users/user.service';
-import type {
-    RegisterUserDto,
-    UserRequestQuery,
-    UserRequestQueryByIdDto
-} from './dto/user-requests.dto';
+import type {RegisterUserDto, UserRequestQueryByIdDto} from './dto/user-requests.dto';
 import {ApiReply} from '@/types';
 import {RegisterUserResponseDto, UserResponseDto} from './dto/user-response.dto';
 import {IRegisterUserUseCase} from './use-case/register-user.use-case';
@@ -14,24 +10,6 @@ export class UserController {
         private readonly userService: IUserService,
         private readonly registerUserUseCase: IRegisterUserUseCase
     ) {}
-
-    /**
-     * getUserByName - контроллер получения пользователя по имени
-     *
-     * @param {FastifyRequest<{Querystring: UserRequestQuery}>} request
-     *
-     * @param reply
-     * @returns {Promise<void>}
-     */
-    public getUserByName = async (
-        request: FastifyRequest<{Querystring: UserRequestQuery}>,
-        reply: ApiReply<UserResponseDto>
-    ): Promise<void> => {
-        const {name} = request.query;
-        await reply
-            .status(200)
-            .send({success: true, data: await this.userService.findByName(name)});
-    };
 
     /**
      * getUserById - контроллер получения пользователя по id

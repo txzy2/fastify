@@ -14,13 +14,14 @@ import cors from '@fastify/cors';
 export const createApp = async (): Promise<FastifyInstance> => {
     const fastify = Fastify({logger: LOGGER_CONFIG});
 
-    await fastify.register(cors, {
-        origin: SERVER_CONFIG.node == "dev" ? '*' : 'localhost',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-        credentials: true,
-    });
-
+    if (SERVER_CONFIG.node == 'dev') {
+        await fastify.register(cors, {
+            origin: '*',
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+            credentials: true
+        });
+    }
 
     fastify.setErrorHandler((error, request, reply) => {
         request.log.error(error);
