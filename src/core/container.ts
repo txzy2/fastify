@@ -1,4 +1,5 @@
 import {PrismaService} from '@/prisma/prisma.service';
+import {RedisService} from '@/redis/redis.service';
 import {UserService} from '@/modules/users/user.service';
 import {UserController} from '@/modules/users/user.controller';
 import {AuthController} from '@/modules/auth/auth.controller';
@@ -10,6 +11,7 @@ import {ILogger} from '@/core/logger';
 
 export interface Container {
     prismaService: PrismaService;
+    redisService: RedisService;
     userController: UserController;
     authController: AuthController;
 }
@@ -24,6 +26,9 @@ export interface Container {
 export const createContainer = async (logger: ILogger): Promise<Container> => {
     const prismaService = new PrismaService();
     await prismaService.connect();
+
+    const redisService = new RedisService();
+    await redisService.connect();
 
     // === Repositories ===
     const userRepository = new UserRepository(prismaService);
@@ -47,6 +52,7 @@ export const createContainer = async (logger: ILogger): Promise<Container> => {
 
     return {
         prismaService,
+        redisService,
         userController,
         authController
     };
