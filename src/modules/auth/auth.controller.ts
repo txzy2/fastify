@@ -12,6 +12,8 @@ import {
     RegisterUserResponseDto
 } from '@/modules/users/dto/user-response.dto';
 import {IRegisterUserUseCase} from '@/modules/auth/use-case/register-user.use-case';
+import {ApiErrors} from '@/utils/enums/errors';
+import {AppError} from '@/utils/error-handler';
 import {IAuthService} from './auth.service';
 
 export class AuthController {
@@ -76,8 +78,14 @@ export class AuthController {
         request: FastifyRequest<{Body: RefreshTokenDto}>,
         reply: ApiReply<LogoutResponseDto>
     ): Promise<void> => {
+        const userId = request.user?.sub;
+
+        if (!userId) {
+            throw new AppError(ApiErrors.UNAUTHORIZED, 401);
+        }
+
         const {refresh_token} = request.body;
-        await this.authService.logout(refresh_token);
+        await this.authService.logout(refresh_token, userId);
         await reply.status(200).send(apiSuccess({message: 'Выход выполнен'}));
     };
 }

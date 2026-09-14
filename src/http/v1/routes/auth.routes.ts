@@ -1,4 +1,4 @@
-import {FastifyInstance} from 'fastify';
+import {FastifyInstance, preHandlerHookHandler} from 'fastify';
 import {AuthController} from '@/modules/auth/auth.controller';
 import type {ApiResponse} from '@/types';
 import {
@@ -28,7 +28,8 @@ import {validatePassword} from '../../hooks/validate-password.hook';
  */
 export const registerAuthRoutes = (
     fastifyInstance: FastifyInstance,
-    authController: AuthController
+    authController: AuthController,
+    authGuard: preHandlerHookHandler
 ) => {
     fastifyInstance.post<{
         Body: RegisterUserDto;
@@ -62,7 +63,7 @@ export const registerAuthRoutes = (
         Reply: ApiResponse<LogoutResponseDto>;
     }>(
         '/auth/logout',
-        {preHandler: [logRequest], schema: logoutSchema},
+        {preHandler: [logRequest, authGuard], schema: logoutSchema},
         authController.logout
     );
 };

@@ -128,6 +128,7 @@ export const logoutSchema: FastifySchema = {
             }
         },
         400: errorResponse('Validation error'),
+        401: errorResponse('Unauthorized'),
         500: errorResponse('Internal server error')
     }
 };
