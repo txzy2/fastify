@@ -5,7 +5,7 @@ import {RegisterUserResponseDto, UserResponseDto} from './dto/user-response.dto'
 import {mapRegisterUserToDto, mapUserFromRepoToDto} from './user.mapper';
 import {Prisma, UserActivity} from '@prisma/client';
 import {RegisterUserDto} from './dto/user-requests.dto';
-import {ILogger} from '@/core/container';
+import {ILogger} from '@/core/logger';
 import {AppError} from '@/utils/error-handler';
 import {hashPassword} from '@/utils/helpers/passwords.helper';
 

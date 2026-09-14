@@ -1,7 +1,7 @@
 import {ILicensesRepository} from './licenses.repository';
 import {ApiErrors} from '@/utils/enums/errors';
 import {Prisma} from '@prisma/client';
-import {ILogger} from '@/core/container';
+import {ILogger} from '@/core/logger';
 import {AppError} from '@/utils/error-handler';
 
 export interface ILicensesService {
@@ -10,7 +10,7 @@ export interface ILicensesService {
 
 export class LicensesService implements ILicensesService {
     public constructor(
-        private readonly LicensesRepository: ILicensesRepository,
+        private readonly licensesRepository: ILicensesRepository,
         private readonly logger: ILogger
     ) {}
 
@@ -25,7 +25,7 @@ export class LicensesService implements ILicensesService {
      * @returns {Promise<void>}
      */
     public async register(userId: string, tx?: Prisma.TransactionClient): Promise<void> {
-        const license = await this.LicensesRepository.create(userId, tx);
+        const license = await this.licensesRepository.create(userId, tx);
 
         if (!license) {
             this.logger.warn(`${ApiErrors.LICENSE_CREATE_ERROR}, userId: ${userId}`);

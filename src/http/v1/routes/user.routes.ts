@@ -1,8 +1,11 @@
 import {FastifyInstance} from 'fastify';
 import {UserController} from '@/modules/users/user.controller';
 import type {ApiResponse} from '@/types';
-import {getUserByIdSchema} from '../schemas/user.schema';
-import {UserRequestQueryByIdDto} from '@/modules/users/dto/user-requests.dto';
+import {getUserByIdSchema, getUserByNameSchema} from '../schemas/user.schema';
+import {
+    UserRequestQueryByIdDto,
+    UserRequestQueryByNameDto
+} from '@/modules/users/dto/user-requests.dto';
 import {UserResponseDto} from '@/modules/users/dto/user-response.dto';
 import {logRequest} from '../../hooks/log-request.hook';
 
@@ -16,6 +19,15 @@ export const registerUserRoutes = (
     fastifyInstance: FastifyInstance,
     userController: UserController
 ) => {
+    fastifyInstance.get<{
+        Querystring: UserRequestQueryByNameDto;
+        Reply: ApiResponse<UserResponseDto>;
+    }>(
+        '/user',
+        {preHandler: [logRequest], schema: getUserByNameSchema},
+        userController.getUserByName
+    );
+
     fastifyInstance.get<{
         Params: UserRequestQueryByIdDto;
         Reply: ApiResponse<UserResponseDto>;

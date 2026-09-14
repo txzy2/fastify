@@ -46,11 +46,17 @@ export class UserRepository implements IUserRepository {
      * Найти пользователя по параметрам.
      *
      * @param {Prisma.UsersWhereInput} params - Параметры для поиска.
+     * @param {Prisma.TransactionClient} tx - Транзакция.
      *
      * @returns {Promise<Users | null>} - Объект Users, если пользователь найден, или null, если не найден.
      */
-    public async getByParams(params: Prisma.UsersWhereInput): Promise<Users | null> {
-        return await this.prisma.users.findFirst({where: params});
+    public async getByParams(
+        params: Prisma.UsersWhereInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<Users | null> {
+        const client = tx ?? this.prisma;
+
+        return await client.users.findFirst({where: params});
     }
 
     /**

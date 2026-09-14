@@ -9,7 +9,7 @@ REST API на базе **Fastify** с использованием **TypeScript*
 - **Fastify v5** — быстрый и минималистичный веб-фреймворк
 - **Prisma v7** — ORM для работы с базой данных
 - **PostgreSQL** — основная СУБД
-- **class-validator** — валидация запросов
+- **JSON Schema** — валидация запросов и ответов
 - **Swagger** — автоматическая документация API
 - **Pino** — логирование с ротацией файлов
 
@@ -68,17 +68,31 @@ fastify/
 │   ├── core/                    # Ядро приложения
 │   │   ├── bootstrap.ts         # Инициализация приложения и обработчик ошибок
 │   │   ├── config.ts            # Конфигурация сервера
-│   │   ├── container.ts         # DI-контейнер
-│   │   └── logger.ts            # Настройка логгера
+│   │   ├── container.ts         # DI-контейнер (composition root)
+│   │   └── logger.ts            # Настройка логгера и интерфейс ILogger
 │   ├── http/
+│   │   ├── hooks/               # preHandler-хуки (лог, валидация пароля)
 │   │   └── v1/
-│   │       ├── schemas/         # Swagger-схемы для валидации
-│   │       └── routes.ts        # Регистрация маршрутов
-│   ├── modules/
+│   │       ├── routes/          # Маршруты по модулям
+│   │       │   ├── index.ts     # Общий агрегатор registerRoutes
+│   │       │   ├── auth.routes.ts
+│   │       │   └── user.routes.ts
+│   │       └── schemas/         # Swagger/JSON-схемы
+│   │           ├── auth.schema.ts
+│   │           └── user.schema.ts
+│   ├── modules/                 # Вертикальные срезы по домену
+│   │   ├── auth/
+│   │   │   ├── auth.controller.ts
+│   │   │   └── use-case/register-user.use-case.ts
+│   │   ├── licenses/
+│   │   │   ├── licenses.repository.ts
+│   │   │   └── licenses.service.ts
 │   │   └── users/
-│   │       ├── user.controller.ts   # Обработчики запросов
-│   │       ├── user.service.ts      # Бизнес-логика
-│   │       └── user.repository.ts   # Работа с БД
+│   │       ├── dto/
+│   │       ├── user.controller.ts
+│   │       ├── user.mapper.ts
+│   │       ├── user.repository.ts
+│   │       └── user.service.ts
 │   ├── prisma/
 │   │   └── prisma.service.ts    # Сервис Prisma
 │   ├── utils/
@@ -88,10 +102,13 @@ fastify/
 ├── prisma/
 │   ├── schema.prisma            # Схема БД
 │   └── migrations/              # Миграции Prisma
+├── docs/                        # Контекст проекта для разработчиков и агентов
 ├── docker-compose.dev.yml       # Docker-конфигурация для разработки
 ├── index.ts                     # Точка входа
 └── package.json
 ```
+
+> Подробное описание архитектуры и конвенций — в каталоге [`docs/`](./docs/README.md).
 
 ## 📖 API Документация
 
@@ -303,8 +320,6 @@ drwxr-xr-x ... 10001 10001 ... loki_data
 
 - `fastify` — веб-фреймворк
 - `@prisma/client` — ORM клиент
-- `class-validator` — валидация данных
-- `class-transformer` — трансформация объектов
 - `@fastify/swagger` — генерация OpenAPI спецификации
 - `@fastify/swagger-ui` — UI для документации
 - `pino-roll` — ротация логов

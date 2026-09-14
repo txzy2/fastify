@@ -3,7 +3,7 @@ import {IUserService} from '@/modules/users/user.service';
 import {ILicensesService} from '@/modules/licenses/licenses.service';
 import {PrismaService} from '@/prisma/prisma.service';
 import {ApiErrors} from '@/utils/enums/errors';
-import {ILogger} from '@/core/container';
+import {ILogger} from '@/core/logger';
 import {UserActivity} from '@prisma/client';
 import {RegisterUserResponseDto} from '@/modules/users/dto/user-response.dto';
 import {AppError} from '@/utils/error-handler';

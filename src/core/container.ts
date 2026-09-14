@@ -6,7 +6,7 @@ import {UserRepository} from '@/modules/users/user.repository';
 import {RegisterUserUseCase} from '@/modules/auth/use-case/register-user.use-case';
 import {LicensesService} from '@/modules/licenses/licenses.service';
 import {LicensesRepository} from '@/modules/licenses/licenses.repository';
-import fastify from 'fastify';
+import {ILogger} from '@/core/logger';
 
 export interface Container {
     prismaService: PrismaService;
@@ -14,16 +14,10 @@ export interface Container {
     authController: AuthController;
 }
 
-export interface ILogger {
-    info(obj: object | string, msg?: string): void;
-    error(obj: object | string, msg?: string): void;
-    warn(obj: object | string, msg?: string): void;
-}
-
 /**
  * Creates an instance of the application container.
  *
- * The container contains the Prisma service, the user service, and the user controller.
+ * The container contains the Prisma service and the application controllers.
  *
  * @returns {Promise<Container>} - A promise that resolves to an instance of the application container.
  */
