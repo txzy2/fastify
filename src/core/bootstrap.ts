@@ -53,8 +53,12 @@ export const createApp = async (): Promise<FastifyInstance> => {
         await container.prismaService.disconnect();
     });
 
-    await fastify.register(swagger, {openapi: openApiDocs});
-    await fastify.register(swaggerUi, {routePrefix: '/docs'});
+    const isProd = SERVER_CONFIG.node === 'prod' || SERVER_CONFIG.node === 'production';
+
+    if (!isProd) {
+        await fastify.register(swagger, {openapi: openApiDocs});
+        await fastify.register(swaggerUi, {routePrefix: '/docs'});
+    }
 
     fastify.register(
         instance => {
