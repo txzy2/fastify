@@ -129,6 +129,9 @@ fastify/
 
 - **Swagger UI:** `http://localhost:3000/docs`
 
+> В режиме `prod` (`NODE_ENV=prod`) Swagger и `/docs` **не регистрируются** вовсе —
+> схема API наружу не отдаётся. Полная документация доступна только в dev.
+
 ### Эндпоинты
 
 | Метод | Путь              | Описание                      |
@@ -191,6 +194,9 @@ curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
 | `DB_NAME`                 | Имя базы данных      | `fastify_db`          |
 | `DB_USER`                 | Пользователь БД      | `fastify_user`        |
 | `DB_PASS`                 | Пароль БД            | `fastify_pass`        |
+| `REDIS_HOST`              | Хост Redis           | `127.0.0.1`           |
+| `REDIS_PORT`              | Порт Redis           | `6379`                |
+| `REDIS_PASS`              | Пароль Redis         | —                     |
 
 ## 🛠️ Команды
 
@@ -385,6 +391,7 @@ make up-prod                     # init-prod + build + up
 | `NODE_ENV`          | `prod`                          |
 | `APP_PORT`          | Внутренний порт приложения      |
 | `DB_NAME/DB_USER/DB_PASS` | Доступ к PostgreSQL       |
+| `REDIS_HOST/PORT/PASS` | Доступ к Redis (в prod `REDIS_HOST=redis`) |
 | `PGSQL_VERSION`     | Версия образа PostgreSQL        |
 | `NGINX_PORT`        | Публичный порт nginx стека      |
 | `GRAFANA_PORT`      | Loopback-порт Grafana           |

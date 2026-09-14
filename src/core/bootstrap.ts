@@ -50,7 +50,10 @@ export const createApp = async (): Promise<FastifyInstance> => {
     const container = await createContainer(fastify.log);
 
     fastify.addHook('onClose', async () => {
-        await container.prismaService.disconnect();
+        await Promise.all([
+            container.prismaService.disconnect(),
+            container.redisService.disconnect()
+        ]);
     });
 
     const isProd = SERVER_CONFIG.node === 'prod' || SERVER_CONFIG.node === 'production';
