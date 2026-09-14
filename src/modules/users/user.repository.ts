@@ -57,6 +57,7 @@ export class UserRepository implements IUserRepository {
      * create - Создание пользователя
      *
      * @param {RegisterUserDto} data
+     * @param hashPassword
      * @param {Prisma.TransactionClient} tx
      * @returns {Promise<Users>}
      */

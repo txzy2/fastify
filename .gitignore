@@ -6,3 +6,6 @@ dbdata/
 loki_data/
 grafana_data/
 prometheus_data/
+
+.idea
+.vscode

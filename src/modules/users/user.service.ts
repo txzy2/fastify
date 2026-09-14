@@ -32,7 +32,8 @@ export class UserService implements IUserService {
     /**
      * UserService Constructor
      *
-     * @param userStorarge
+     * @param userRepository
+     * @param logger
      */
     public constructor(
         private readonly userRepository: IUserRepository,

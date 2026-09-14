@@ -20,6 +20,7 @@ export class UserController {
      *
      * @param {FastifyRequest<{Querystring: UserRequestQuery}>} request
      *
+     * @param reply
      * @returns {Promise<void>}
      */
     public getUserByName = async (
@@ -27,7 +28,9 @@ export class UserController {
         reply: ApiReply<UserResponseDto>
     ): Promise<void> => {
         const {name} = request.query;
-        reply.status(200).send({success: true, data: await this.userService.findByName(name)});
+        await reply
+            .status(200)
+            .send({success: true, data: await this.userService.findByName(name)});
     };
 
     /**
@@ -35,6 +38,7 @@ export class UserController {
      *
      * @param {FastifyRequest<{Params: UserRequestQueryByIdDto}>} request
      *
+     * @param reply
      * @returns {Promise<void>}
      */
     public getUserById = async (
@@ -42,7 +46,7 @@ export class UserController {
         reply: ApiReply<UserResponseDto>
     ): Promise<void> => {
         const {id} = request.params;
-        reply.status(200).send({success: true, data: await this.userService.findById(id)});
+        await reply.status(200).send({success: true, data: await this.userService.findById(id)});
     };
 
     /**
@@ -57,6 +61,8 @@ export class UserController {
         reply: ApiReply<RegisterUserResponseDto>
     ): Promise<void> => {
         const {body} = request;
-        reply.status(201).send({success: true, data: await this.registerUserUseCase.execute(body)});
+        await reply
+            .status(201)
+            .send({success: true, data: await this.registerUserUseCase.execute(body)});
     };
 }

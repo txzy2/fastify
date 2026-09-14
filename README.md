@@ -223,6 +223,72 @@ bunx prisma migrate reset
 - **Пароль:** `fastify_pass`
 - **База данных:** `fastify_db`
 
+## 📊 Мониторинг
+
+В `docker-compose.dev.yml` поднимаются **Prometheus**, **Grafana** и **Loki**. Данные Grafana и Loki хранятся в хостовых директориях:
+
+| Сервис  | Хост            | Контейнер            | Пользователь контейнера |
+| ------- | --------------- | -------------------- | ----------------------- |
+| Grafana | `./grafana_data` | `/var/lib/grafana`   | UID/GID `472`           |
+| Loki    | `./loki_data`    | `/loki`              | UID/GID `10001`         |
+
+### ⚠️ Проблема с правами (Grafana и Loki не запускаются)
+
+**Симптомы:** контейнеры `${PROJECT_NAME}_grafana` и `${PROJECT_NAME}_loki` падают сразу после старта или бесконечно перезапускаются (`restart: always`). В логах:
+
+```text
+GF_PATHS_DATA='/var/lib/grafana' is not writable.
+open /var/lib/grafana/grafana.db: permission denied
+```
+
+```text
+failed to create directory /loki/chunks: mkdir /loki/chunks: permission denied
+```
+
+**Причина:** Docker создаёт bind-mount директории `./grafana_data` и `./loki_data` на хосте от имени `root`, а процессы внутри контейнеров работают под непривилегированными пользователями (Grafana — `472`, Loki — `10001`). Поэтому контейнер не может писать в смонтированную директорию.
+
+**Решение:** выдать директориям владельца, соответствующего пользователю внутри контейнера:
+
+```bash
+sudo chown -R 472:472 ./grafana_data
+sudo chown -R 10001:10001 ./loki_data
+```
+
+Затем перезапустить сервисы:
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d grafana loki
+```
+
+Проверить, что владелец установлен верно (UID вместо имён):
+
+```bash
+ls -ln | grep -E "grafana_data|loki_data"
+```
+
+Ожидаемый результат:
+
+```text
+drwxr-xr-x ... 472   472   ... grafana_data
+drwxr-xr-x ... 10001 10001 ... loki_data
+```
+
+> **Альтернатива:** можно не менять владельца на хосте, а использовать именованные Docker-тома вместо bind-mount. В этом случае Docker сам выставит корректные права:
+>
+> ```yaml
+> volumes:
+>   grafana_data:
+>   loki_data:
+> ```
+>
+> и в сервисах:
+>
+> ```yaml
+> volumes:
+>   - grafana_data:/var/lib/grafana
+>   - loki_data:/loki
+> ```
+
 ## 🔧 Обработка ошибок
 
 Приложение использует централизованный обработчик ошибок в `bootstrap.ts`:

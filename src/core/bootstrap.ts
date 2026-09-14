@@ -9,8 +9,18 @@ import {registerUserRoutes} from '@/http/v1/routes';
 import {ApiErrors} from '@/utils/enums/errors';
 import {AppError} from '@/utils/error-handler';
 
+import cors from '@fastify/cors';
+
 export const createApp = async (): Promise<FastifyInstance> => {
     const fastify = Fastify({logger: LOGGER_CONFIG});
+
+    await fastify.register(cors, {
+        origin: SERVER_CONFIG.node == "dev" ? '*' : 'localhost',
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: true,
+    });
+
 
     fastify.setErrorHandler((error, request, reply) => {
         request.log.error(error);
