@@ -102,8 +102,21 @@ fastify/
 ├── prisma/
 │   ├── schema.prisma            # Схема БД
 │   └── migrations/              # Миграции Prisma
+├── docker/
+│   └── nginx/
+│       └── default.conf         # Конфиг nginx внутри стека (проксирует на app)
+├── monitoring/
+│   ├── prometheus.yml           # Конфиг Prometheus
+│   ├── loki/config.yml          # Конфиг Loki
+│   ├── alloy/config.alloy       # Grafana Alloy — сбор логов nginx в Loki
+│   └── grafana/provisioning/    # Автопровижининг datasources Grafana
 ├── docs/                        # Контекст проекта для разработчиков и агентов
+├── dev_data/                    # Данные dev-инфраструктуры (gitignore)
+├── prod_data/                   # Данные prod-инфраструктуры (gitignore)
 ├── docker-compose.dev.yml       # Docker-конфигурация для разработки
+├── docker-compose.yml           # Docker-конфигурация для продакшена
+├── Dockerfile                   # Образ приложения для продакшена
+├── Makefile                     # Команды запуска dev/prod
 ├── index.ts                     # Точка входа
 └── package.json
 ```
@@ -201,14 +214,36 @@ bunx prisma migrate deploy
 bunx prisma migrate reset
 ```
 
+### Make-таргеты
+
+```bash
+# --- Разработка ---
+make init-dev     # создать dev_data/ и выставить права на директории
+make up-dev       # поднять dev-инфраструктуру
+make ps-dev       # статус dev-контейнеров
+make down-dev     # остановить dev-инфраструктуру
+make app-dev      # запустить приложение в watch-режиме
+
+# --- Продакшен ---
+make init-prod    # создать .env.prod, prod_data/ и выставить права
+make build-prod   # собрать образ приложения
+make up-prod      # собрать и поднять prod-стек
+make ps-prod      # статус prod-контейнеров
+make logs-prod    # логи prod-стека (follow)
+make down-prod    # остановить prod-стек
+```
+
 ## 📝 Логирование
 
-Логи записываются в директорию `logs/`:
+Поведение зависит от `NODE_ENV`:
 
-- `app.log` — общие логи приложения
-- `error.log` — только ошибки
+- **dev** — логи пишутся в директорию `logs/` (`app.log` — общие, `error.log` — ошибки,
+  ротация ежедневно, хранение 30 файлов) и дополнительно выводятся в консоль через
+  `pino-pretty`.
+- **prod** — файлы не пишутся, логи уходят напрямую в **Loki** (`pino-loki`). Локальный
+  диск не засоряется, сервис считается stateless.
 
-В режиме разработки логи также выводятся в консоль через `pino-pretty`.
+Сбор логов и просмотр описаны в разделе [Мониторинг](#-мониторинг).
 
 ## 🗄️ База данных
 
@@ -226,21 +261,58 @@ bunx prisma migrate reset
 
 Для удобной работы с БД в docker-compose включён Adminer:
 
-- **URL:** `http://localhost:795`
+- **URL (dev):** `http://localhost:795`
 - **Система:** PostgreSQL
-- **Сервер:** `fastify_db`
+- **Сервер dev:** `fastify_db`
 - **Пользователь:** `fastify_user`
 - **Пароль:** `fastify_pass`
 - **База данных:** `fastify_db`
 
+> В prod-режиме порт Adminer привязан к `127.0.0.1` и наружу не выставлен — доступ
+> только через SSH-туннель, см. [Доступ к Grafana и Adminer](#-доступ-к-grafana-и-adminer-через-ssh).
+> В качестве сервера БД указывайте `db`.
+
 ## 📊 Мониторинг
 
-В `docker-compose.dev.yml` поднимаются **Prometheus**, **Grafana** и **Loki**. Данные Grafana и Loki хранятся в хостовых директориях:
+В стеке поднимаются **Prometheus**, **Grafana**, **Loki**, `postgres-exporter` и
+**Grafana Alloy**. Данные хранятся в хостовых директориях: в dev — `./dev_data`, в prod —
+`./prod_data` (обе в `.gitignore`).
 
-| Сервис  | Хост            | Контейнер            | Пользователь контейнера |
-| ------- | --------------- | -------------------- | ----------------------- |
-| Grafana | `./grafana_data` | `/var/lib/grafana`   | UID/GID `472`           |
-| Loki    | `./loki_data`    | `/loki`              | UID/GID `10001`         |
+| Сервис     | Хост (dev)                | Хост (prod)                | Контейнер          | UID/GID   |
+| ---------- | ------------------------- | -------------------------- | ------------------ | --------- |
+| Prometheus | `./dev_data/prometheus`   | `./prod_data/prometheus`   | `/prometheus`      | `65534`   |
+| Grafana    | `./dev_data/grafana`      | `./prod_data/grafana`      | `/var/lib/grafana` | `472`     |
+| Loki       | `./dev_data/loki`         | `./prod_data/loki`         | `/loki`            | `10001`   |
+
+**Grafana** при старте автоматически подхватывает datasources (Prometheus и Loki) из
+`monitoring/grafana/provisioning/`. **Alloy** читает логи nginx из общего тома
+`nginx_logs` и отправляет их в Loki с метками `job="nginx"`, `logtype="access|error"` —
+искать в Grafana Explore запросом `{job="nginx"}`.
+
+### Просмотр логов nginx
+
+В Grafana → **Explore** → datasource **Loki**:
+
+```logql
+{job="nginx"}
+{job="nginx", logtype="error"}
+```
+
+> Логи nginx собираются только в prod-стеке (`docker-compose.yml`), т.к. nginx есть
+> только там. В dev приложение запускается на хосте, без nginx-контейнера.
+
+### 🌐 Публичные и внутренние порты (prod)
+
+Наружу в prod-стеке опубликованы только:
+
+| Сервис  | Порт на хосте | Назначение                        |
+| ------- | ------------- | --------------------------------- |
+| nginx   | `${NGINX_PORT}` | точка входа API (за системным nginx) |
+
+**Grafana** и **Adminer** привязаны к `127.0.0.1` и доступны только с самого сервера —
+см. [Доступ к Grafana и Adminer](#-доступ-к-grafana-и-adminer-через-ssh). Все остальные
+сервисы (app, db, Prometheus, Loki, postgres-exporter, Alloy) общаются только внутри
+docker-сети.
 
 ### ⚠️ Проблема с правами (Grafana и Loki не запускаются)
 
@@ -255,49 +327,119 @@ open /var/lib/grafana/grafana.db: permission denied
 failed to create directory /loki/chunks: mkdir /loki/chunks: permission denied
 ```
 
-**Причина:** Docker создаёт bind-mount директории `./grafana_data` и `./loki_data` на хосте от имени `root`, а процессы внутри контейнеров работают под непривилегированными пользователями (Grafana — `472`, Loki — `10001`). Поэтому контейнер не может писать в смонтированную директорию.
+**Причина:** Docker создаёт bind-mount директории (например, `./dev_data/grafana`) на хосте от имени `root`, а процессы внутри контейнеров работают под непривилегированными пользователями (Grafana — `472`, Prometheus — `65534`, Loki — `10001`). Поэтому контейнер не может писать в смонтированную директорию.
 
-**Решение:** выдать директориям владельца, соответствующего пользователю внутри контейнера:
+**Решение:** Make-таргеты `init-dev` / `init-prod` создают директории и выставляют владельца автоматически (через одноразовый root-контейнер, `sudo` на хосте не нужен):
 
 ```bash
-sudo chown -R 472:472 ./grafana_data
-sudo chown -R 10001:10001 ./loki_data
+make init-dev    # для dev_data/
+make init-prod   # для prod_data/
+```
+
+Эти таргеты выполняются автоматически как зависимости `make up-dev` / `make up-prod`.
+
+Если нужно поправить вручную (обрати внимание на UID):
+
+```bash
+sudo chown -R 472:472 dev_data/grafana
+sudo chown -R 65534:65534 dev_data/prometheus
+sudo chown -R 10001:10001 dev_data/loki
 ```
 
 Затем перезапустить сервисы:
 
 ```bash
-docker-compose -f docker-compose.dev.yml up -d grafana loki
+docker-compose -f docker-compose.dev.yml up -d prometheus grafana loki
 ```
 
 Проверить, что владелец установлен верно (UID вместо имён):
 
 ```bash
-ls -ln | grep -E "grafana_data|loki_data"
+ls -ln dev_data
 ```
 
-Ожидаемый результат:
+## 🚢 Продакшен (Docker)
 
-```text
-drwxr-xr-x ... 472   472   ... grafana_data
-drwxr-xr-x ... 10001 10001 ... loki_data
+Prod-стек описан в `docker-compose.yml`, образ приложения собирается `Dockerfile`
+(база `oven/bun`, multi-stage: зависимости + `prisma generate`, затем рантайм).
+
+Состав стека: `nginx`, `app`, `migrate` (одноразовый, применяет миграции), `db`,
+`adminer`, `prometheus`, `postgres-exporter`, `grafana`, `loki`, `alloy`.
+Данные — в `./prod_data` (в `.gitignore`).
+
+### Запуск
+
+```bash
+cp .env.prod.example .env.prod   # или make init-prod
+# отредактируйте .env.prod: DB_PASS, GRAFANA_PASSWORD, NGINX_PORT и др.
+make up-prod                     # init-prod + build + up
 ```
 
-> **Альтернатива:** можно не менять владельца на хосте, а использовать именованные Docker-тома вместо bind-mount. В этом случае Docker сам выставит корректные права:
->
-> ```yaml
-> volumes:
->   grafana_data:
->   loki_data:
-> ```
->
-> и в сервисах:
->
-> ```yaml
-> volumes:
->   - grafana_data:/var/lib/grafana
->   - loki_data:/loki
-> ```
+Сервис `migrate` прогоняет `prisma migrate deploy` **до** старта `app`, так что ручные
+миграции не нужны.
+
+### Переменные окружения (prod)
+
+| Переменная          | Описание                        |
+| ------------------- | ------------------------------- |
+| `NODE_ENV`          | `prod`                          |
+| `APP_PORT`          | Внутренний порт приложения      |
+| `DB_NAME/DB_USER/DB_PASS` | Доступ к PostgreSQL       |
+| `PGSQL_VERSION`     | Версия образа PostgreSQL        |
+| `NGINX_PORT`        | Публичный порт nginx стека      |
+| `GRAFANA_PORT`      | Loopback-порт Grafana           |
+| `ADMINER_PORT`      | Loopback-порт Adminer           |
+| `GRAFANA_USER` / `GRAFANA_PASSWORD` | Учётка администратора Grafana |
+
+### Схема портов
+
+- Наружу публикуется только `nginx` (`${NGINX_PORT}`). На сервере перед ним обычно
+  стоит системный nginx.
+- `grafana` и `adminer` привязаны к `127.0.0.1` — снаружи недоступны.
+- Остальные сервисы доступны только внутри docker-сети.
+
+### 🔐 Доступ к Grafana и Adminer через SSH
+
+Так как порты привязаны к `127.0.0.1`, заходить нужно через SSH-туннель. Локальные
+порты выбирайте `> 1024` (иначе потребуется root на своей машине):
+
+```bash
+ssh -N \
+  -L 3001:127.0.0.1:3001 \
+  -L 1795:127.0.0.1:795 \
+  <user>@<your-server>
+```
+
+После подключения:
+
+- Grafana → `http://localhost:3001`
+- Adminer → `http://localhost:1795` (Server: `db`)
+
+Значения правых портов должны совпадать с `GRAFANA_PORT` / `ADMINER_PORT` в `.env.prod`.
+
+### Размещение за системным nginx
+
+На хосте системный nginx слушает 80/443 и проксирует на контейнерный nginx
+(`http://127.0.0.1:${NGINX_PORT}`):
+
+```nginx
+server {
+    listen 80;
+    server_name <your-domain-or-ip>;
+
+    location / {
+        proxy_pass http://127.0.0.1:<NGINX_PORT>;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+> Внутренний nginx уже умеет runtime-резолвинг `app` через Docker DNS
+> (`resolver 127.0.0.11`), поэтому пересоздание контейнера `app` не роняет прокси.
 
 ## 🔧 Обработка ошибок
 
