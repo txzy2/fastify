@@ -4,13 +4,16 @@ import {RegisterUserDto} from './dto/user-requests.dto';
 
 export interface IUserRepository {
     getById(id: string): Promise<Users | null>;
-    getByName(name: string): Promise<Users | null>;
     getByParams(
         params: Prisma.UsersWhereInput,
         tx?: Prisma.TransactionClient
     ): Promise<Users | null>;
 
-    create(data: RegisterUserDto, tx?: Prisma.TransactionClient): Promise<Users | null>;
+    create(
+        data: RegisterUserDto,
+        hashPassword: string,
+        tx?: Prisma.TransactionClient
+    ): Promise<Users | null>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -28,36 +31,33 @@ export class UserRepository implements IUserRepository {
     }
 
     /**
-     * Найти пользователя по имени.
-     *
-     * @param {string} name - Имя пользователя.
-     *
-     * @returns {Promise<Users | null>} - Объект Users, если пользователь найден, или null, если не найден.
-     */
-    public async getByName(name: string): Promise<Users | null> {
-        return await this.prisma.users.findFirst({where: {name}});
-    }
-
-    /**
      * Найти пользователя по параметрам.
      *
      * @param {Prisma.UsersWhereInput} params - Параметры для поиска.
+     * @param {Prisma.TransactionClient} tx - Транзакция.
      *
      * @returns {Promise<Users | null>} - Объект Users, если пользователь найден, или null, если не найден.
      */
-    public async getByParams(params: Prisma.UsersWhereInput): Promise<Users | null> {
-        return await this.prisma.users.findFirst({where: params});
+    public async getByParams(
+        params: Prisma.UsersWhereInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<Users | null> {
+        const client = tx ?? this.prisma;
+
+        return await client.users.findFirst({where: params});
     }
 
     /**
      * create - Создание пользователя
      *
      * @param {RegisterUserDto} data
+     * @param hashPassword
      * @param {Prisma.TransactionClient} tx
      * @returns {Promise<Users>}
      */
     public async create(
         data: RegisterUserDto,
+        hashPassword: string,
         tx?: Prisma.TransactionClient
     ): Promise<Users | null> {
         const client = tx ?? this.prisma;
@@ -67,6 +67,7 @@ export class UserRepository implements IUserRepository {
                 name: data.name,
                 age: data.age,
                 email: data.email,
+                password: hashPassword,
                 active: UserActivity.ACTIVE
             }
         });

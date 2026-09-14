@@ -1,27 +1,23 @@
 import {PrismaService} from '@/prisma/prisma.service';
 import {UserService} from '@/modules/users/user.service';
 import {UserController} from '@/modules/users/user.controller';
+import {AuthController} from '@/modules/auth/auth.controller';
 import {UserRepository} from '@/modules/users/user.repository';
-import {RegisterUserUseCase} from '@/modules/users/use-case/register-user.use-case';
+import {RegisterUserUseCase} from '@/modules/auth/use-case/register-user.use-case';
 import {LicensesService} from '@/modules/licenses/licenses.service';
 import {LicensesRepository} from '@/modules/licenses/licenses.repository';
-import fastify from 'fastify';
+import {ILogger} from '@/core/logger';
 
 export interface Container {
     prismaService: PrismaService;
     userController: UserController;
-}
-
-export interface ILogger {
-    info(obj: object | string, msg?: string): void;
-    error(obj: object | string, msg?: string): void;
-    warn(obj: object | string, msg?: string): void;
+    authController: AuthController;
 }
 
 /**
  * Creates an instance of the application container.
  *
- * The container contains the Prisma service, the user service, and the user controller.
+ * The container contains the Prisma service and the application controllers.
  *
  * @returns {Promise<Container>} - A promise that resolves to an instance of the application container.
  */
@@ -46,10 +42,12 @@ export const createContainer = async (logger: ILogger): Promise<Container> => {
     );
 
     // === Controllers ===
-    const userController = new UserController(userService, createUserUseCase);
+    const userController = new UserController(userService);
+    const authController = new AuthController(createUserUseCase);
 
     return {
         prismaService,
-        userController
+        userController,
+        authController
     };
 };

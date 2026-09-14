@@ -13,10 +13,11 @@ enum UserActivity {
 }
 
 model Users {
-  id    String @id @unique @default(uuid()) @db.Uuid
-  name  String @db.VarChar(255)
-  email String @unique @db.VarChar(255)
-  age   Int
+  id       String @id @unique @default(uuid()) @db.Uuid
+  name     String @db.VarChar(255)
+  email    String @unique @db.VarChar(255)
+  age      Int
+  password String @db.VarChar(255)
 
   active   UserActivity
   licenses Licenses[]

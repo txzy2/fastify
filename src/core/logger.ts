@@ -1,6 +1,12 @@
 import path from 'path';
 import {FastifyServerOptions} from 'fastify';
 
+export interface ILogger {
+    info(obj: object | string, msg?: string): void;
+    error(obj: object | string, msg?: string): void;
+    warn(obj: object | string, msg?: string): void;
+}
+
 const isDev = process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'development';
 const logsDir = path.join(process.cwd(), 'logs');
 

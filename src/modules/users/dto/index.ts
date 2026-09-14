@@ -1,2 +1,2 @@
-export {UserRequestQueryByIdDto} from './user-requests.dto';
-export {UserRequestQuery} from './user-requests.dto';
+export {RegisterUserDto, UserRequestQueryByIdDto} from './user-requests.dto';
+export {RegisterUserResponseDto, UserResponseDto} from './user-response.dto';

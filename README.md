@@ -9,7 +9,7 @@ REST API на базе **Fastify** с использованием **TypeScript*
 - **Fastify v5** — быстрый и минималистичный веб-фреймворк
 - **Prisma v7** — ORM для работы с базой данных
 - **PostgreSQL** — основная СУБД
-- **class-validator** — валидация запросов
+- **JSON Schema** — валидация запросов и ответов
 - **Swagger** — автоматическая документация API
 - **Pino** — логирование с ротацией файлов
 
@@ -68,17 +68,31 @@ fastify/
 │   ├── core/                    # Ядро приложения
 │   │   ├── bootstrap.ts         # Инициализация приложения и обработчик ошибок
 │   │   ├── config.ts            # Конфигурация сервера
-│   │   ├── container.ts         # DI-контейнер
-│   │   └── logger.ts            # Настройка логгера
+│   │   ├── container.ts         # DI-контейнер (composition root)
+│   │   └── logger.ts            # Настройка логгера и интерфейс ILogger
 │   ├── http/
+│   │   ├── hooks/               # preHandler-хуки (лог, валидация пароля)
 │   │   └── v1/
-│   │       ├── schemas/         # Swagger-схемы для валидации
-│   │       └── routes.ts        # Регистрация маршрутов
-│   ├── modules/
+│   │       ├── routes/          # Маршруты по модулям
+│   │       │   ├── index.ts     # Общий агрегатор registerRoutes
+│   │       │   ├── auth.routes.ts
+│   │       │   └── user.routes.ts
+│   │       └── schemas/         # Swagger/JSON-схемы
+│   │           ├── auth.schema.ts
+│   │           └── user.schema.ts
+│   ├── modules/                 # Вертикальные срезы по домену
+│   │   ├── auth/
+│   │   │   ├── auth.controller.ts
+│   │   │   └── use-case/register-user.use-case.ts
+│   │   ├── licenses/
+│   │   │   ├── licenses.repository.ts
+│   │   │   └── licenses.service.ts
 │   │   └── users/
-│   │       ├── user.controller.ts   # Обработчики запросов
-│   │       ├── user.service.ts      # Бизнес-логика
-│   │       └── user.repository.ts   # Работа с БД
+│   │       ├── dto/
+│   │       ├── user.controller.ts
+│   │       ├── user.mapper.ts
+│   │       ├── user.repository.ts
+│   │       └── user.service.ts
 │   ├── prisma/
 │   │   └── prisma.service.ts    # Сервис Prisma
 │   ├── utils/
@@ -88,10 +102,13 @@ fastify/
 ├── prisma/
 │   ├── schema.prisma            # Схема БД
 │   └── migrations/              # Миграции Prisma
+├── docs/                        # Контекст проекта для разработчиков и агентов
 ├── docker-compose.dev.yml       # Docker-конфигурация для разработки
 ├── index.ts                     # Точка входа
 └── package.json
 ```
+
+> Подробное описание архитектуры и конвенций — в каталоге [`docs/`](./docs/README.md).
 
 ## 📖 API Документация
 
@@ -101,18 +118,11 @@ fastify/
 
 ### Эндпоинты
 
-| Метод | Путь                       | Описание                       |
-| ----- | -------------------------- | ------------------------------ |
-| `GET` | `/api/v1/user?name=<name>` | Получить пользователя по имени |
-| `GET` | `/api/v1/user/:id`         | Получить пользователя по UUID  |
+| Метод | Путь              | Описание                      |
+| ----- | ----------------- | ----------------------------- |
+| `GET` | `/api/v1/user/:id` | Получить пользователя по UUID |
 
 ### Примеры запросов
-
-**Получение пользователя по имени:**
-
-```bash
-curl http://localhost:3000/api/v1/user?name=John
-```
 
 **Получение пользователя по ID:**
 
@@ -223,6 +233,72 @@ bunx prisma migrate reset
 - **Пароль:** `fastify_pass`
 - **База данных:** `fastify_db`
 
+## 📊 Мониторинг
+
+В `docker-compose.dev.yml` поднимаются **Prometheus**, **Grafana** и **Loki**. Данные Grafana и Loki хранятся в хостовых директориях:
+
+| Сервис  | Хост            | Контейнер            | Пользователь контейнера |
+| ------- | --------------- | -------------------- | ----------------------- |
+| Grafana | `./grafana_data` | `/var/lib/grafana`   | UID/GID `472`           |
+| Loki    | `./loki_data`    | `/loki`              | UID/GID `10001`         |
+
+### ⚠️ Проблема с правами (Grafana и Loki не запускаются)
+
+**Симптомы:** контейнеры `${PROJECT_NAME}_grafana` и `${PROJECT_NAME}_loki` падают сразу после старта или бесконечно перезапускаются (`restart: always`). В логах:
+
+```text
+GF_PATHS_DATA='/var/lib/grafana' is not writable.
+open /var/lib/grafana/grafana.db: permission denied
+```
+
+```text
+failed to create directory /loki/chunks: mkdir /loki/chunks: permission denied
+```
+
+**Причина:** Docker создаёт bind-mount директории `./grafana_data` и `./loki_data` на хосте от имени `root`, а процессы внутри контейнеров работают под непривилегированными пользователями (Grafana — `472`, Loki — `10001`). Поэтому контейнер не может писать в смонтированную директорию.
+
+**Решение:** выдать директориям владельца, соответствующего пользователю внутри контейнера:
+
+```bash
+sudo chown -R 472:472 ./grafana_data
+sudo chown -R 10001:10001 ./loki_data
+```
+
+Затем перезапустить сервисы:
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d grafana loki
+```
+
+Проверить, что владелец установлен верно (UID вместо имён):
+
+```bash
+ls -ln | grep -E "grafana_data|loki_data"
+```
+
+Ожидаемый результат:
+
+```text
+drwxr-xr-x ... 472   472   ... grafana_data
+drwxr-xr-x ... 10001 10001 ... loki_data
+```
+
+> **Альтернатива:** можно не менять владельца на хосте, а использовать именованные Docker-тома вместо bind-mount. В этом случае Docker сам выставит корректные права:
+>
+> ```yaml
+> volumes:
+>   grafana_data:
+>   loki_data:
+> ```
+>
+> и в сервисах:
+>
+> ```yaml
+> volumes:
+>   - grafana_data:/var/lib/grafana
+>   - loki_data:/loki
+> ```
+
 ## 🔧 Обработка ошибок
 
 Приложение использует централизованный обработчик ошибок в `bootstrap.ts`:
@@ -237,8 +313,6 @@ bunx prisma migrate reset
 
 - `fastify` — веб-фреймворк
 - `@prisma/client` — ORM клиент
-- `class-validator` — валидация данных
-- `class-transformer` — трансформация объектов
 - `@fastify/swagger` — генерация OpenAPI спецификации
 - `@fastify/swagger-ui` — UI для документации
 - `pino-roll` — ротация логов
