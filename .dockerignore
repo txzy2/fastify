@@ -12,6 +12,7 @@ dist
 
 logs
 dbdata
+dev_data
 prod_data
 loki_data
 grafana_data

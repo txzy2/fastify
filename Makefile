@@ -1,8 +1,14 @@
-.PHONY: dev prod init up-dev ps-dev down-dev app-dev app-prod up-prod ps-prod down-prod logs-prod build-prod init-prod
+.PHONY: dev prod init init-dev up-dev ps-dev down-dev app-dev app-prod up-prod ps-prod down-prod logs-prod build-prod init-prod
 
 # === Development ===
 
-up-dev:
+init-dev:
+	@mkdir -p dev_data/db dev_data/prometheus dev_data/grafana dev_data/loki
+	@docker run --rm --user root -v "$(CURDIR)/dev_data/prometheus:/data" --entrypoint chown grafana/grafana:latest -R 65534:65534 /data
+	@docker run --rm --user root -v "$(CURDIR)/dev_data/grafana:/data" --entrypoint chown grafana/grafana:latest -R 472:472 /data
+	@docker run --rm --user root -v "$(CURDIR)/dev_data/loki:/data" --entrypoint chown grafana/grafana:latest -R 10001:10001 /data
+
+up-dev: init-dev
 	docker compose -f docker-compose.dev.yml up -d
 
 ps-dev:
