@@ -1,7 +1,7 @@
-import {FastifyInstance} from 'fastify';
+import {FastifyInstance, preHandlerHookHandler} from 'fastify';
 import {UserController} from '@/modules/users/user.controller';
 import type {ApiResponse} from '@/types';
-import {getUserByIdSchema} from '../schemas/user.schema';
+import {getUserByIdSchema, getUserMeSchema} from '../schemas/user.schema';
 import {UserRequestQueryByIdDto} from '@/modules/users/dto/user-requests.dto';
 import {UserResponseDto} from '@/modules/users/dto/user-response.dto';
 import {logRequest} from '../../hooks/log-request.hook';
@@ -14,14 +14,23 @@ import {logRequest} from '../../hooks/log-request.hook';
  */
 export const registerUserRoutes = (
     fastifyInstance: FastifyInstance,
-    userController: UserController
+    userController: UserController,
+    authGuard: preHandlerHookHandler
 ) => {
+    fastifyInstance.get<{
+        Reply: ApiResponse<UserResponseDto>;
+    }>(
+        '/user/me',
+        {preHandler: [logRequest, authGuard], schema: getUserMeSchema},
+        userController.getMe
+    );
+
     fastifyInstance.get<{
         Params: UserRequestQueryByIdDto;
         Reply: ApiResponse<UserResponseDto>;
     }>(
         '/user/:id',
-        {preHandler: [logRequest], schema: getUserByIdSchema},
+        {preHandler: [logRequest, authGuard], schema: getUserByIdSchema},
         userController.getUserById
     );
 };

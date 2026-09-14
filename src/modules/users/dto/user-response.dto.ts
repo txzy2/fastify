@@ -15,3 +15,12 @@ export interface RegisterUserResponseDto {
     created_at: Date;
     updated_at: Date;
 }
+
+export interface LoginUserResponseDto {
+    access_token: string;
+    refresh_token: string;
+}
+
+export interface LogoutResponseDto {
+    message: string;
+}

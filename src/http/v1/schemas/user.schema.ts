@@ -9,7 +9,27 @@ export const openApiDocs = {
         description: 'API documentation',
         version: SERVER_CONFIG.app_version
     },
-    servers: [{url: `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}`}]
+    servers: [{url: `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}`}],
+    components: {
+        securitySchemes: {
+            bearerAuth: {
+                type: 'http' as const,
+                scheme: 'bearer',
+                bearerFormat: 'JWT'
+            }
+        }
+    }
+};
+
+const UnauthorizedApiError = {
+    description: 'Unauthorized',
+    type: 'object',
+    properties: {
+        success: {type: 'boolean', example: false},
+        error: {type: 'string', example: 'Не авторизован'},
+        version: {type: 'string'}
+    },
+    required: ['success', 'error']
 };
 
 export const UserNotFoundApiError = {
@@ -89,13 +109,28 @@ const InternalServerErrorApiError = {
 
 export const getUserByIdSchema: FastifySchema = {
     summary: 'Get user by ID',
-    description: 'Returns a single user matched by UUID',
+    description: 'Returns a single user matched by UUID. Requires Bearer access token.',
     tags: ['Users'],
+    security: [{bearerAuth: []}],
     params: ParamsSchema,
 
     response: {
         200: SuccessResponseSchema,
         400: ValidationError,
+        401: UnauthorizedApiError,
+        404: UserNotFoundApiError,
+        500: InternalServerErrorApiError
+    }
+};
+
+export const getUserMeSchema: FastifySchema = {
+    summary: 'Get current user',
+    description: 'Returns the authenticated user based on the Bearer access token',
+    tags: ['Users'],
+    security: [{bearerAuth: []}],
+    response: {
+        200: SuccessResponseSchema,
+        401: UnauthorizedApiError,
         404: UserNotFoundApiError,
         500: InternalServerErrorApiError
     }

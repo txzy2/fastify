@@ -83,6 +83,9 @@ fastify/
 │   ├── modules/                 # Вертикальные срезы по домену
 │   │   ├── auth/
 │   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.service.ts
+│   │   │   ├── token.service.ts
+│   │   │   ├── refresh-token.repository.ts
 │   │   │   └── use-case/register-user.use-case.ts
 │   │   ├── licenses/
 │   │   │   ├── licenses.repository.ts
@@ -95,6 +98,8 @@ fastify/
 │   │       └── user.service.ts
 │   ├── prisma/
 │   │   └── prisma.service.ts    # Сервис Prisma
+│   ├── redis/
+│   │   └── redis.service.ts     # Клиент Redis
 │   ├── utils/
 │   │   └── enums/
 │   │       └── errors.ts        # Перечисление ошибок API
@@ -134,16 +139,53 @@ fastify/
 
 ### Эндпоинты
 
-| Метод | Путь              | Описание                      |
-| ----- | ----------------- | ----------------------------- |
-| `GET` | `/api/v1/user/:id` | Получить пользователя по UUID |
+| Метод  | Путь                    | Auth   | Описание                          |
+| ------ | ----------------------- | ------ | --------------------------------- |
+| `POST` | `/api/v1/auth/register` | —      | Регистрация пользователя          |
+| `POST` | `/api/v1/auth/login`    | —      | Логин, выдача пары токенов        |
+| `POST` | `/api/v1/auth/refresh`  | —      | Обмен refresh-токена (ротация)    |
+| `POST` | `/api/v1/auth/logout`   | —      | Отзыв refresh-токена              |
+| `GET`  | `/api/v1/user/me`       | Bearer | Получить текущего пользователя    |
+| `GET`  | `/api/v1/user/:id`      | Bearer | Получить пользователя по UUID     |
+
+### Аутентификация (JWT)
+
+- **Access-токен** — короткоживущий JWT (`HS256`), передаётся в заголовке
+  `Authorization: Bearer <access_token>`. Проверяется хуком `authGuard`.
+- **Refresh-токен** — случайный идентификатор, хранится в **Redis** с TTL и
+  ротируется при каждом `/auth/refresh` (старый сразу инвалидируется).
+- Секрет и время жизни задаются через `JWT_SECRET`, `JWT_ACCESS_TTL`, `JWT_REFRESH_TTL`.
 
 ### Примеры запросов
 
-**Получение пользователя по ID:**
+**Логин и получение токенов:**
 
 ```bash
-curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
+curl -X POST http://localhost:3000/api/v1/auth/login \
+    -H 'Content-Type: application/json' \
+    -d '{"email":"user@example.com","password":"Passw0rd!"}'
+```
+
+**Обновление токенов:**
+
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/refresh \
+    -H 'Content-Type: application/json' \
+    -d '{"refresh_token":"<refresh_token>"}'
+```
+
+**Текущий пользователь (по токену):**
+
+```bash
+curl http://localhost:3000/api/v1/user/me \
+    -H 'Authorization: Bearer <access_token>'
+```
+
+**Получение пользователя по ID (защищённый маршрут):**
+
+```bash
+curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000 \
+    -H 'Authorization: Bearer <access_token>'
 ```
 
 ### Формат ответов
@@ -198,6 +240,9 @@ curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
 | `APP_PORT`                | Порт сервера         | `3000`                |
 | `LOGGER_LEVEL`            | Уровень логирования  | `info`                |
 | `LOGGER_TRANSPORT_TARGET` | Транспорт логов      | `pino-pretty`         |
+| `JWT_SECRET`              | Секрет для подписи JWT | —                   |
+| `JWT_ACCESS_TTL`          | Время жизни access-токена | `15m`            |
+| `JWT_REFRESH_TTL`         | Время жизни refresh-токена (сек) | `604800`  |
 | `DATABASE_URL`            | URL подключения к БД | —                     |
 | `DB_NAME`                 | Имя базы данных      | `fastify_db`          |
 | `DB_USER`                 | Пользователь БД      | `fastify_user`        |
@@ -401,6 +446,9 @@ make up-prod                     # init-prod + build + up
 | `APP_PORT`          | Внутренний порт приложения      |
 | `DB_NAME/DB_USER/DB_PASS` | Доступ к PostgreSQL       |
 | `REDIS_HOST/PORT/PASS` | Доступ к Redis (в prod `REDIS_HOST=redis`) |
+| `JWT_SECRET`        | Секрет подписи JWT (обязательно сменить) |
+| `JWT_ACCESS_TTL`    | Время жизни access-токена (`15m`)        |
+| `JWT_REFRESH_TTL`   | Время жизни refresh-токена в секундах    |
 | `PGSQL_VERSION`     | Версия образа PostgreSQL        |
 | `NGINX_PORT`        | Публичный порт nginx стека      |
 | `GRAFANA_PORT`      | Loopback-порт Grafana           |
