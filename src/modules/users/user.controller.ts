@@ -2,6 +2,7 @@ import {FastifyRequest} from 'fastify';
 import {IUserService} from '@/modules/users/user.service';
 import type {UserRequestQueryByIdDto} from './dto/user-requests.dto';
 import {ApiReply} from '@/types';
+import {apiSuccess} from '@/utils/helpers/response.helper';
 import {UserResponseDto} from './dto/user-response.dto';
 
 export class UserController {
@@ -20,6 +21,7 @@ export class UserController {
         reply: ApiReply<UserResponseDto>
     ): Promise<void> => {
         const {id} = request.params;
-        await reply.status(200).send({success: true, data: await this.userService.findById(id)});
+        const user = await this.userService.findById(id);
+        await reply.status(200).send(apiSuccess(user));
     };
 }

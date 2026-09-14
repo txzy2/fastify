@@ -148,6 +148,10 @@ curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
 
 ### Формат ответов
 
+Поле `version` добавляется через обёртки `apiSuccess(data)` / `apiError(message)` из
+`src/utils/helpers/response.helper.ts` — значение берётся из `APP_VERSION`. В контроллерах
+достаточно обернуть ответ, вручную `version` указывать не нужно.
+
 **Успешный ответ:**
 
 ```json
@@ -157,7 +161,8 @@ curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "John Doe",
         "age": 30
-    }
+    },
+    "version": "v1.0.0"
 }
 ```
 
@@ -166,7 +171,8 @@ curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
 ```json
 {
     "success": false,
-    "error": "name must be a string"
+    "error": "name must be a string",
+    "version": "v1.0.0"
 }
 ```
 
@@ -175,7 +181,8 @@ curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
 ```json
 {
     "success": false,
-    "error": "Пользователь не найден или не активен"
+    "error": "Пользователь не найден или не активен",
+    "version": "v1.0.0"
 }
 ```
 
@@ -187,6 +194,7 @@ curl http://localhost:3000/api/v1/user/550e8400-e29b-41d4-a716-446655440000
 | ------------------------- | -------------------- | --------------------- |
 | `NODE_ENV`                | Режим работы         | `dev`                 |
 | `APP_NAME`                | Название приложения  | `Test Fastify Api`    |
+| `APP_VERSION`             | Версия приложения    | `v1.0.0`              |
 | `APP_PORT`                | Порт сервера         | `3000`                |
 | `LOGGER_LEVEL`            | Уровень логирования  | `info`                |
 | `LOGGER_TRANSPORT_TARGET` | Транспорт логов      | `pino-pretty`         |
@@ -389,6 +397,7 @@ make up-prod                     # init-prod + build + up
 | Переменная          | Описание                        |
 | ------------------- | ------------------------------- |
 | `NODE_ENV`          | `prod`                          |
+| `APP_VERSION`       | Версия приложения (в ответах)   |
 | `APP_PORT`          | Внутренний порт приложения      |
 | `DB_NAME/DB_USER/DB_PASS` | Доступ к PostgreSQL       |
 | `REDIS_HOST/PORT/PASS` | Доступ к Redis (в prod `REDIS_HOST=redis`) |

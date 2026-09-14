@@ -20,6 +20,7 @@ export const registerUserSchema: FastifySchema = {
             type: 'object',
             properties: {
                 success: {type: 'boolean'},
+                version: {type: 'string'},
                 data: {
                     type: 'object',
                     properties: {
@@ -35,6 +36,7 @@ export const registerUserSchema: FastifySchema = {
             type: 'object',
             properties: {
                 success: {type: 'boolean'},
+                version: {type: 'string'},
                 error: {type: 'string'}
             }
         },
@@ -43,6 +45,7 @@ export const registerUserSchema: FastifySchema = {
             type: 'object',
             properties: {
                 success: {type: 'boolean'},
+                version: {type: 'string'},
                 error: {type: 'string'}
             }
         }

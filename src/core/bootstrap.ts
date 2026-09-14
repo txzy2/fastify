@@ -8,6 +8,7 @@ import {createContainer} from '@/core/container';
 import {registerRoutes} from '@/http/v1/routes';
 import {ApiErrors} from '@/utils/enums/errors';
 import {AppError} from '@/utils/error-handler';
+import {apiError} from '@/utils/helpers/response.helper';
 
 import cors from '@fastify/cors';
 
@@ -28,23 +29,14 @@ export const createApp = async (): Promise<FastifyInstance> => {
         const fastifyError = error as FastifyError;
 
         if (error instanceof AppError) {
-            return reply.status(error.statusCode).send({
-                success: false,
-                error: error.message
-            });
+            return reply.status(error.statusCode).send(apiError(error.message));
         }
 
         if (fastifyError.code === 'FST_ERR_VALIDATION') {
-            return reply.status(400).send({
-                success: false,
-                error: fastifyError.message
-            });
+            return reply.status(400).send(apiError(fastifyError.message));
         }
 
-        return reply.status(500).send({
-            success: false,
-            error: ApiErrors.INTERNAL_SERVER_ERROR
-        });
+        return reply.status(500).send(apiError(ApiErrors.INTERNAL_SERVER_ERROR));
     });
 
     const container = await createContainer(fastify.log);

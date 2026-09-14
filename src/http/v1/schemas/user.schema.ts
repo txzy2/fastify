@@ -7,7 +7,7 @@ export const openApiDocs = {
     info: {
         title: process.env.APP_NAME || 'Fastify app',
         description: 'API documentation',
-        version: '1.0.0'
+        version: SERVER_CONFIG.app_version
     },
     servers: [{url: `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}`}]
 };
@@ -17,7 +17,8 @@ export const UserNotFoundApiError = {
     type: 'object',
     properties: {
         success: {type: 'boolean', example: false},
-        error: {type: 'string', example: 'User not found'}
+        error: {type: 'string', example: 'User not found'},
+        version: {type: 'string'}
     },
     required: ['success', 'error']
 };
@@ -28,6 +29,7 @@ export const ValidationError = {
     properties: {
         success: {type: 'boolean', example: false},
         error: {type: 'string', example: 'Validation failed'},
+        version: {type: 'string'},
         details: {
             type: 'array',
             items: {
@@ -60,7 +62,8 @@ const SuccessResponseSchema = {
     type: 'object',
     properties: {
         success: {type: 'boolean', example: true},
-        data: UserDataSchema
+        data: UserDataSchema,
+        version: {type: 'string'}
     },
     required: ['success', 'data']
 };
@@ -78,7 +81,8 @@ const InternalServerErrorApiError = {
     type: 'object',
     properties: {
         success: {type: 'boolean', example: false},
-        error: {type: 'string', example: 'Internal server error'}
+        error: {type: 'string', example: 'Internal server error'},
+        version: {type: 'string'}
     },
     required: ['success', 'error']
 };
