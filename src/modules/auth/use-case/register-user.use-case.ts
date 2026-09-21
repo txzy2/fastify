@@ -41,7 +41,6 @@ export class RegisterUserUseCase implements IRegisterUserUseCase {
         try {
             return await this.prisma.$transaction(async tx => {
                 const user = await this.userService.register(data, tx);
-                this.logger.info(`User with id ${user.id} created`);
                 await this.licensesService.register(user.id, tx);
 
                 return user;

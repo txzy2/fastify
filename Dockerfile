@@ -6,6 +6,7 @@ COPY package.json bun.lock ./
 COPY prisma.config.ts ./
 COPY prisma ./prisma
 ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db?schema=public"
+ENV PRISMA_ENGINES_MIRROR="https://cdn.npmmirror.com/binaries/prisma"
 RUN bun install --frozen-lockfile --production && bunx prisma generate
 
 FROM base AS runner
