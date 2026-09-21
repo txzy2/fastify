@@ -33,12 +33,11 @@ export class AuthService implements IAuthService {
      */
     public async login(data: LoginUserDto): Promise<LoginUserResponseDto> {
         const user = await this.userRepository.getByParams({email: data.email});
-
         const passwordValid = user ? await verifyPassword(user.password, data.password) : false;
 
         if (!user || user.active !== UserActivity.ACTIVE || !passwordValid) {
             this.logger.warn(`Failed login attempt for email ${data.email}`);
-            throw new AppError(ApiErrors.INVALID_CREDENTIALS, 401);
+            throw new AppError(ApiErrors.INVALID_CREDENTIALS, 404);
         }
 
         return await this.issueTokens(user);
@@ -63,13 +62,11 @@ export class AuthService implements IAuthService {
         }
 
         const userId = await this.refreshTokenRepository.getUserId(refreshToken);
-
         if (!userId) {
             throw new AppError(ApiErrors.REFRESH_TOKEN_INVALID, 401);
         }
 
         const user = await this.userRepository.getById(userId);
-
         if (!user || user.active !== UserActivity.ACTIVE) {
             await this.refreshTokenRepository.remove(refreshToken);
             throw new AppError(ApiErrors.REFRESH_TOKEN_INVALID, 401);
